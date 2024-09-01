@@ -2,6 +2,7 @@ from typing import Any
 from django.db.models.query import QuerySet
 from django.shortcuts import render
 from django.views.generic import ListView
+from django.http import HttpResponse
 from .models import Vms
 
 from django.conf import settings
@@ -30,7 +31,9 @@ def dbupdate():
 
         return service_instance
 
+    print('Подключаемся к vCenter...')
     si = connect()
+    print('Получаем данные из vCenter...')
     content = si.RetrieveContent()
     container = content.rootFolder
     view_type = [vim.VirtualMachine]
@@ -40,9 +43,12 @@ def dbupdate():
     children = container_view.view
 
     # Очищаем БД перед обновлением
+    print('Очищаем БД...')
     Vms.objects.all().delete()
 
     # Основной цикл заполения БД
+    print('Загружаем записи: ')
+    print(len(children))
     for child in children:
         
         osInfo = {}
@@ -145,6 +151,9 @@ class ViewBadOS(ListView):
     def get_queryset(self):
         return Vms.objects.filter(powerState='poweredOn', distroVersion=None).exclude(name__contains='vCLS')
     
+def dbupdte_func(request):
+    dbupdate()
+    return HttpResponse("""<html><script>window.location.replace('/');</script></html>""")
 
 # def index(request):
 

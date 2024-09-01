@@ -18,9 +18,9 @@
             <li class="nav-item"><a href="/vmtools" class="nav-link">VMtools</a></li>
             <li class="nav-item"><a href="/bados" class="nav-link">OS</a></li>
             <li class="nav-item">
-                <form method="POST">
+                <form action="/dbupdte_func">
                     {% csrf_token %}
-                    <input type="submit" value="Синхронизировать" name="getData" class="btn btn-outline-danger" />
+                    <input type="submit" value="Синхронизировать" class="btn btn-outline-danger" />
                 </form> 
             </li>
         </ul>
