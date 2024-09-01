@@ -1,0 +1,117 @@
+{% extends "vmconnectapp/base.html" %}
+
+{% block content %}
+
+    <div class="container">
+        <div class="col-md-6">
+            <h2 class="text-body-emphasis">vCenter ОБУ ИТЦ</h2>
+            <!-- <p>Ready to go beyond the starter template? Check out these open source projects that you can quickly duplicate to a new GitHub repository.</p> -->
+            <ul class="list-unstyled ps-0">
+            <li>
+                <a class="icon-link mb-1" href="/" rel="noopener" target="_blank">
+                <svg class="bi" width="16" height="16"><use xlink:href="#arrow-right-circle"></use></svg>
+                Всего работают (без технических):
+                </a>
+                {{ poweredOn }}
+            </li>
+            <li>
+                <a class="icon-link mb-1" href="#" rel="noopener" target="_blank">
+                <svg class="bi" width="16" height="16"><use xlink:href="#arrow-right-circle"></use></svg>
+                Всего виртуальных машин: 
+                </a>
+                {{ vmsCount }}
+            </li>
+            <li>
+                <a class="icon-link mb-1" href="#" rel="noopener" target="_blank">
+                <svg class="bi" width="16" height="16"><use xlink:href="#arrow-right-circle"></use></svg>
+                Отключены:
+                </a>
+                {{ poweredOff }}
+            </li>
+            <li>
+                <a class="icon-link mb-1" href="#" rel="noopener" target="_blank">
+                <svg class="bi" width="16" height="16"><use xlink:href="#arrow-right-circle"></use></svg>
+                Технические ВМ:
+                </a>
+                {{ techVM }}
+            </li>
+            </ul>
+        </div>
+    </div>
+
+    <table class="table table-striped">
+        <thead>
+            <tr>
+                <th scope="col">VM</th>
+                <th scope="col">Tools</th>
+                <th scope="col">OS</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for item in vms %}
+            <tr>
+                <td><b>{{ item.name }}</b></br>
+                    {{ item.ipAdress }}</br>
+                    {{ item.powerState }}
+                </td>
+                <td>{{ item.toolsStatus }}</br>
+                    {{ item.vmtoolsdescription }}</br>
+                    {{ item.vmtoolsversionNumber }}
+                </td>
+                <td><b>{{ item.prettyName }}</b></br>
+                    {{ item.familyName }} / x{{ item.bitness }} </br>                    
+                    {{ item.kernelVersion }}
+                </td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+
+    <!-- <h1>Hello!</h1>
+    <form method="POST">
+        {% csrf_token %}
+        <input type="submit" value="Получить" name="getData"/>
+    </form> -->
+
+    <!-- <h4>Количество ВМ: {{ vmsAllCount }}</h4>
+    <h4>Работают: {{ vmsOnCount }}</h4>
+    <h4>ОС не определена или не актуальна: {{ badVmsCount }}</h4>
+    <h4>Не отобрается информация vmtools: {{ lenlowvmtoolsVms }}</h4>
+
+    <table class="table">
+        <thead>
+            <tr>
+                <th scope="col">name</th>
+                <th scope="col">powerState</th>
+                <th scope="col">ipAdress</th>
+                <th scope="col">toolsStatus</th>
+                <th scope="col">vmtoolsdescription</th>
+                <th scope="col">vmtoolsversionNumber</th>
+                <th scope="col">prettyName</th>
+                <th scope="col">familyName</th>
+                <th scope="col">distroName</th>
+                <th scope="col">distroVersion</th>
+                <th scope="col">kernelVersion</th>
+                <th scope="col">bitness</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for item in lowvmtoolsVms %}
+            <tr>
+                <td>{{ item.name }}</td>
+                <td>{{ item.powerState }}</td>
+                <td>{{ item.ipAdress }}</td>
+                <td>{{ item.toolsStatus }}</td>
+                <td>{{ item.vmtoolsdescription }}</td>
+                <td>{{ item.vmtoolsversionNumber }}</td>
+                <td>{{ item.prettyName }}</td>
+                <td>{{ item.familyName }}</td>
+                <td>{{ item.distroName }}</td>
+                <td>{{ item.distroVersion }}</td>
+                <td>{{ item.kernelVersion }}</td>
+                <td>{{ item.bitness }}</td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table> -->
+{% endblock content %}

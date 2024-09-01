@@ -1,0 +1,56 @@
+{% extends "vmconnectapp/base.html" %}
+
+{% block content %}
+
+    <div class="container">
+        <div class="col-md-6">
+            <h2 class="text-body-emphasis">Устаревшие ОС</h2>
+            <!-- <p>Ready to go beyond the starter template? Check out these open source projects that you can quickly duplicate to a new GitHub repository.</p> -->
+            <ul class="list-unstyled ps-0">
+            <li>
+                <a class="icon-link mb-1" href="/" rel="noopener" target="_blank">
+                <svg class="bi" width="16" height="16"><use xlink:href="#arrow-right-circle"></use></svg>
+                Требуют внимания:
+                </a>
+                {{ badToolsCount }}
+            </li>
+            <li>
+                <a class="icon-link mb-1" href="#" rel="noopener" target="_blank">
+                <svg class="bi" width="16" height="16"><use xlink:href="#arrow-right-circle"></use></svg>
+                Невозможно обновить: 
+                </a>
+                0
+            </li>
+            </ul>
+        </div>
+    </div>
+
+    <table class="table table-striped">
+        <thead>
+            <tr>
+                <th scope="col">VM</th>
+                <th scope="col">Tools</th>
+                <th scope="col">OS</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for item in vms %}
+            <tr>
+                <td><b>{{ item.name }}</b></br>
+                    {{ item.ipAdress }}</br>
+                    {{ item.powerState }}
+                </td>
+                <td>{{ item.toolsStatus }}</br>
+                    {{ item.vmtoolsdescription }}</br>
+                    {{ item.vmtoolsversionNumber }}
+                </td>
+                <td><b>{{ item.prettyName }}</b></br>
+                    {{ item.familyName }} / x{{ item.bitness }} </br>                    
+                    {{ item.kernelVersion }}
+                </td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+
+{% endblock content %}
