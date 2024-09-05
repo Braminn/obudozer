@@ -1,14 +1,14 @@
-from typing import Any
-from django.db.models.query import QuerySet
-from django.shortcuts import render
+# from typing import Any
+# from django.db.models.query import QuerySet
+# from django.shortcuts import render
 from django.views.generic import ListView
 from django.http import HttpResponse
-from .models import Vms
-
 from django.conf import settings
-from pyVim.connect import SmartConnect
 
+from pyVim.connect import SmartConnect
 from pyVmomi import vim
+
+from .models import Vms
 
 
 def dbupdate():
@@ -145,12 +145,36 @@ class ViewBadOS(ListView):
 
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
+        oldVersions = [ 'Windows Server 2012', 
+                        'Windows Server 2008', 
+                        'Windows 7', 
+                        'Rocky Linux 8.7 (Green Obsidian)', 
+                        'Ubuntu 18', 
+                        'Ubuntu 20.04.3 LTS', 
+                        'Ubuntu 22.04.3 LTS', 
+                        'Ubuntu 20.04.2 LTS',
+                        'Ubuntu 20.04.1 LTS',
+                        'Ubuntu 20.04.4 LTS',
+        ]
         context['vmsCount'] = Vms.objects.all().count()
+        context['badOSCount'] = Vms.objects.filter(prettyName__in=oldVersions, powerState='poweredOn').count()
         return context
 
     def get_queryset(self):
-        return Vms.objects.filter(powerState='poweredOn', distroVersion=None).exclude(name__contains='vCLS')
+        oldVersions = [ 'Windows Server 2012', 
+                        'Windows Server 2008', 
+                        'Windows 7', 
+                        'Rocky Linux 8.7 (Green Obsidian)', 
+                        'Ubuntu 18', 
+                        'Ubuntu 20.04.3 LTS', 
+                        'Ubuntu 22.04.3 LTS', 
+                        'Ubuntu 20.04.2 LTS',
+                        'Ubuntu 20.04.1 LTS',
+                        'Ubuntu 20.04.4 LTS',
+        ]
+        return Vms.objects.filter(prettyName__in=oldVersions, powerState='poweredOn')
     
+
 def dbupdte_func(request):
     dbupdate()
     return HttpResponse("""<html><script>window.location.replace('/');</script></html>""")
