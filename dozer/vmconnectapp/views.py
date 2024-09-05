@@ -121,7 +121,44 @@ class IndexVms(ListView):
 
 
 class IndexVmsPoweredOff(ListView):
-    pass
+    model = Vms
+    template_name = 'vmconnectapp/vmspoweredoff.html'
+    context_object_name = 'vms'
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        context['poweredOff'] = Vms.objects.filter(powerState='poweredOff').count()
+        return context
+
+    def get_queryset(self):
+        return Vms.objects.filter(powerState='poweredOff')
+    
+
+class IndexVmstechVM(ListView):
+    model = Vms
+    template_name = 'vmconnectapp/techvm.html'
+    context_object_name = 'vms'
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        context['techVM'] = Vms.objects.filter(name__contains='vCLS').count()
+        return context
+
+    def get_queryset(self):
+        return Vms.objects.filter(name__contains='vCLS')
+    
+class IndexVmsAll(ListView):
+    model = Vms
+    template_name = 'vmconnectapp/vmsall.html'
+    context_object_name = 'vms'
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        context['vmsCount'] = Vms.objects.all().count()
+        return context
+
+    def get_queryset(self):
+        return Vms.objects.all()
 
 
 class ViewVMtolls(ListView):
@@ -145,11 +182,15 @@ class ViewBadOS(ListView):
 
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
-        oldVersions = [ 'Windows Server 2012', 
-                        'Windows Server 2008', 
-                        'Windows 7', 
+        oldVersions = [ 'Windows Server 2012 R2 Standard Edition, 64-bit (Build 9600)', 
+                        'Windows Server 2008 R2 Standard Edition, 64-bit Service Pack 1 (Build 7601)', 
+                        'Windows 7 Professional, 64-bit Service Pack 1 (Build 7601)', 
+                        'Windows 7 Professional, 32-bit Service Pack 1 (Build 7601)', 
                         'Rocky Linux 8.7 (Green Obsidian)', 
-                        'Ubuntu 18', 
+                        'Ubuntu 18.04.1 LTS',
+                        'Ubuntu 18.04.3 LTS', 
+                        'Ubuntu 18.04.4 LTS', 
+                        'Ubuntu 18.04.6 LTS',
                         'Ubuntu 20.04.3 LTS', 
                         'Ubuntu 22.04.3 LTS', 
                         'Ubuntu 20.04.2 LTS',
@@ -161,11 +202,15 @@ class ViewBadOS(ListView):
         return context
 
     def get_queryset(self):
-        oldVersions = [ 'Windows Server 2012', 
-                        'Windows Server 2008', 
-                        'Windows 7', 
+        oldVersions = [ 'Windows Server 2012 R2 Standard Edition, 64-bit (Build 9600)', 
+                        'Windows Server 2008 R2 Standard Edition, 64-bit Service Pack 1 (Build 7601)', 
+                        'Windows 7 Professional, 64-bit Service Pack 1 (Build 7601)', 
+                        'Windows 7 Professional, 32-bit Service Pack 1 (Build 7601)', 
                         'Rocky Linux 8.7 (Green Obsidian)', 
-                        'Ubuntu 18', 
+                        'Ubuntu 18.04.1 LTS',
+                        'Ubuntu 18.04.3 LTS', 
+                        'Ubuntu 18.04.4 LTS', 
+                        'Ubuntu 18.04.6 LTS',
                         'Ubuntu 20.04.3 LTS', 
                         'Ubuntu 22.04.3 LTS', 
                         'Ubuntu 20.04.2 LTS',
@@ -179,23 +224,5 @@ def dbupdte_func(request):
     dbupdate()
     return HttpResponse("""<html><script>window.location.replace('/');</script></html>""")
 
-# def index(request):
-
-#     if request.POST.get('getData'):
-#         dbupdate()
-
-#     # Вывод содержимого
-#     vms = Vms.objects.all()
-#     vmsCount = Vms.objects.all().count()
-
-#     context = {
-#         'vms': vms,
-#         'vmsCount': vmsCount
-#     }
-
-#     return render(request, 'vmconnectapp/index.html', context)
-
-# def vmtools(request):
-#     return render(request, 'vmconnectapp/vmtools.html')
 
 
