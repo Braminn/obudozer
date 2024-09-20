@@ -7,16 +7,39 @@
             <h2 class="text-body-emphasis">Устаревшие ОС</h2>
             <ul class="list-unstyled ps-0">
             <li>
+                <a class="icon-link mb-1" href="/vmsall" rel="noopener">
+                Всего виртуальных машин: 
+                </a>
+                {{ vmsCount }}
+            </li>
+            <li>
+                <a class="icon-link mb-1" href="/" rel="noopener">
+                Всего работают (без технических):
+                </a>
+                {{ poweredOn }}
+            </li>
+            <li>
+                <a class="icon-link mb-1" href="/vmspoweredoff" rel="noopener">
+                Отключены:
+                </a>
+                {{ poweredOff }}
+            </li>
+            <li>
+                ОС не определена:
 
-                Требуют внимания:
+                {{ badToolsCount }}
+            </li>
+            <li>
+
+                Требуют внимания сейчас:
 
                 {{ badOSCount }}
             </li>
             <li>
 
-                Невозможно обновить: 
+                Устареют в течение года: 
 
-                0
+                {{ badOSCountAfter }}
             </li>
             </ul>
         </div>

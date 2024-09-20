@@ -4,11 +4,12 @@
 from django.views.generic import ListView
 from django.http import HttpResponse
 from django.conf import settings
+from datetime import datetime, timedelta
 
 from pyVim.connect import SmartConnect
 from pyVmomi import vim
 
-from .models import Vms
+from .models import Vms, Oss
 
 
 def dbupdate():
@@ -43,8 +44,10 @@ def dbupdate():
     children = container_view.view
 
     # Очищаем БД перед обновлением
-    print('Очищаем БД...')
+    print('Очищаем БД Vms')
     Vms.objects.all().delete()
+    # print('Очищаем БД Oss')
+    # Oss.objects.all().delete()
 
     # Основной цикл заполения БД
     print('Загружаем записи: ')
@@ -87,6 +90,14 @@ def dbupdate():
         if 'bitness' not in osInfo:
             osInfo['bitness'] = None
 
+        # Заполнение модель Oss уникальными ОС
+        if not Oss.objects.filter(prettyName = osInfo['prettyName']).exists():
+            print(osInfo['prettyName'], ' добавлена в список уникальных ОС')
+            o = Oss(prettyName = osInfo['prettyName'],)
+            o.save()
+        else:
+            print(osInfo['prettyName'], ' уже в списке уникальных ОС')
+
         x = Vms(name = child.summary.config.name, 
                 powerState = child.summary.runtime.powerState,
                 ipAdress = child.summary.guest.ipAddress,
@@ -119,6 +130,14 @@ class IndexVms(ListView):
     def get_queryset(self):
         return Vms.objects.filter(powerState='poweredOn').exclude(name__contains='vCLS')
 
+    # Отобразить уникальные ОС
+    q = Oss.objects.values('prettyName').distinct()
+    print ('Ответ', q) # See for yourself.
+
+    if Oss.objects.filter(prettyName = "Ubuntu 22.04.3 LTS").exists():
+        print("в наборе есть объекты")
+    else:
+        print("объекты в наборе отсутствуют")
 
 class IndexVmsPoweredOff(ListView):
     model = Vms
@@ -180,45 +199,40 @@ class ViewBadOS(ListView):
     template_name = 'vmconnectapp/bados.html'
     context_object_name = 'vms'
 
+    print('OLD-OS')
+    expiredOSAfter = Oss.objects.filter(expirationDate__gt = datetime.now(),
+                                        expirationDate__lt = datetime.now() + timedelta(days=365))
+    expiredOSlistAfteYear = expiredOSAfter.values_list('prettyName', flat=True)
+    print(expiredOSlistAfteYear)
+
+
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
-        oldVersions = [ 'Windows Server 2012 R2 Standard Edition, 64-bit (Build 9600)', 
-                        'Windows Server 2008 R2 Standard Edition, 64-bit Service Pack 1 (Build 7601)', 
-                        'Windows 7 Professional, 64-bit Service Pack 1 (Build 7601)', 
-                        'Windows 7 Professional, 32-bit Service Pack 1 (Build 7601)', 
-                        'Rocky Linux 8.7 (Green Obsidian)', 
-                        'Ubuntu 18.04.1 LTS',
-                        'Ubuntu 18.04.3 LTS', 
-                        'Ubuntu 18.04.4 LTS', 
-                        'Ubuntu 18.04.6 LTS',
-                        'Ubuntu 20.04.3 LTS', 
-                        'Ubuntu 22.04.3 LTS', 
-                        'Ubuntu 20.04.2 LTS',
-                        'Ubuntu 20.04.1 LTS',
-                        'Ubuntu 20.04.4 LTS',
-        ]
+
+        expiredOS = Oss.objects.filter(expirationDate__lt = datetime.now())
+        expiredOSlist = expiredOS.values_list('prettyName', flat=True)
+
+        expiredOSAfter = Oss.objects.filter(expirationDate__gt = datetime.now(),
+                                            expirationDate__lt = datetime.now() + timedelta(days=365))
+        expiredOSlistAfter = expiredOSAfter.values_list('prettyName', flat=True)
+
         context['vmsCount'] = Vms.objects.all().count()
-        context['badOSCount'] = Vms.objects.filter(prettyName__in=oldVersions, powerState='poweredOn').count()
+        context['poweredOn'] = Vms.objects.filter(powerState='poweredOn').exclude(name__contains='vCLS').count()
+        context['poweredOff'] = Vms.objects.filter(powerState='poweredOff').count()
+        context['badToolsCount'] = Vms.objects.filter(powerState='poweredOn', distroVersion=None).exclude(name__contains='vCLS').count()
+
+        context['badOSCount'] = Vms.objects.filter(prettyName__in=expiredOSlist, powerState='poweredOn').count()
+        context['badOSCountAfter'] = Vms.objects.filter(prettyName__in=expiredOSlistAfter, powerState='poweredOn').count()
+
         return context
 
     def get_queryset(self):
-        oldVersions = [ 'Windows Server 2012 R2 Standard Edition, 64-bit (Build 9600)', 
-                        'Windows Server 2008 R2 Standard Edition, 64-bit Service Pack 1 (Build 7601)', 
-                        'Windows 7 Professional, 64-bit Service Pack 1 (Build 7601)', 
-                        'Windows 7 Professional, 32-bit Service Pack 1 (Build 7601)', 
-                        'Rocky Linux 8.7 (Green Obsidian)', 
-                        'Ubuntu 18.04.1 LTS',
-                        'Ubuntu 18.04.3 LTS', 
-                        'Ubuntu 18.04.4 LTS', 
-                        'Ubuntu 18.04.6 LTS',
-                        'Ubuntu 20.04.3 LTS', 
-                        'Ubuntu 22.04.3 LTS', 
-                        'Ubuntu 20.04.2 LTS',
-                        'Ubuntu 20.04.1 LTS',
-                        'Ubuntu 20.04.4 LTS',
-        ]
-        return Vms.objects.filter(prettyName__in=oldVersions, powerState='poweredOn')
+        expiredOS = Oss.objects.filter(expirationDate__lt = datetime.now())
+        expiredOSlist = expiredOS.values_list('prettyName', flat=True)
+
+        return Vms.objects.filter(prettyName__in=expiredOSlist, powerState='poweredOn').order_by('prettyName')
     
+
 
 def dbupdte_func(request):
     dbupdate()
