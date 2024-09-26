@@ -32,6 +32,12 @@ DEBUG = True
 
 ALLOWED_HOSTS = ['localhost', '127.0.0.1']
 
+# CSRF settings
+
+if DEBUG:
+    CSRF_TRUSTED_ORIGINS = ['http://*', 'https://*']
+if not DEBUG:
+    CSRF_TRUSTED_ORIGINS = ['http://http://obudozer.admlr.loc/', 'https://http://obudozer.admlr.loc/'] # FIX admin CSRF token issue
 
 # Application definition
 
