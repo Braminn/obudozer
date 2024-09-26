@@ -30,12 +30,12 @@ SECRET_KEY = os.getenv('SECRET_KEY')
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = True
 
-ALLOWED_HOSTS = ['localhost', '127.0.0.1']
+ALLOWED_HOSTS = ['localhost', '127.0.0.1', 'obudozer.admlr.loc']
 
 # CSRF settings
 
 if DEBUG:
-    CSRF_TRUSTED_ORIGINS = ['http://*', 'https://*']
+    CSRF_TRUSTED_ORIGINS = ['http://obudozer.admlr.loc', 'https://obudozer.admlr.loc']
 if not DEBUG:
     CSRF_TRUSTED_ORIGINS = ['http://obudozer.admlr.loc/', 'https://obudozer.admlr.loc/'] # FIX admin CSRF token issue
 
