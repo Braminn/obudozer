@@ -50,12 +50,13 @@
             {% for item in vms %}
             <tr>
                 <td><b>{{ item.name }}</b></br>
-                    {{ item.ipAdress }}</br>
+                    {{ item.resourcePool }}</br>
                     {{ item.powerState }}
                 </td>
                 <td>{{ item.toolsStatus }}</br>
                     {{ item.vmtoolsdescription }}</br>
-                    {{ item.vmtoolsversionNumber }}
+                    {{ item.ipAdress }}
+                    {% comment %} {{ item.vmtoolsversionNumber }} {% endcomment %}
                 </td>
                 <td><b>{{ item.prettyName }}</b></br>
                     {{ item.familyName }} / x{{ item.bitness }} </br>                    

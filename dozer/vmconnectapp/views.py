@@ -54,6 +54,7 @@ def dbupdate():
     print(len(children))
     for child in children:
         
+        resource_pool_name = None
         osInfo = {}
         vmtoolsdesc = None
         vmtoolsver = None
@@ -74,6 +75,15 @@ def dbupdate():
 
         if 'prettyName' not in osInfo:
             osInfo['prettyName'] = None
+
+        resource_pool = child.resourcePool
+        if resource_pool:
+            #print(f"Resource Pool для виртуальной машины {osInfo['prettyName']}: {resource_pool.name}")
+            resource_pool_name = resource_pool.name
+        else:
+            resource_pool_name = None
+            #print(f"Виртуальная машина {osInfo['prettyName']} не присоединена к Resource Pool.")
+
             
         if 'familyName' not in osInfo:
             osInfo['familyName'] = None
@@ -92,14 +102,15 @@ def dbupdate():
 
         # Заполнение модель Oss уникальными ОС
         if not Oss.objects.filter(prettyName = osInfo['prettyName']).exists():
-            print(osInfo['prettyName'], ' добавлена в список уникальных ОС')
+            #print(osInfo['prettyName'], ' добавлена в список уникальных ОС')
             o = Oss(prettyName = osInfo['prettyName'],)
             o.save()
-        else:
-            print(osInfo['prettyName'], ' уже в списке уникальных ОС')
+        #else:
+            #print(osInfo['prettyName'], ' уже в списке уникальных ОС')
 
         x = Vms(name = child.summary.config.name, 
                 powerState = child.summary.runtime.powerState,
+                resourcePool = resource_pool_name,
                 ipAdress = child.summary.guest.ipAddress,
                 toolsStatus = child.summary.guest.toolsStatus,
                 vmtoolsdescription = vmtoolsdesc,
@@ -128,7 +139,7 @@ class IndexVms(ListView):
         return context
     
     def get_queryset(self):
-        return Vms.objects.filter(powerState='poweredOn').exclude(name__contains='vCLS')
+        return Vms.objects.filter(powerState='poweredOn').exclude(name__contains='vCLS').order_by('resourcePool')
 
     # Отобразить уникальные ОС
     q = Oss.objects.values('prettyName').distinct()

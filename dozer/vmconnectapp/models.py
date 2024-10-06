@@ -5,6 +5,7 @@ from datetime import datetime
 
 class Vms(models.Model):
     name = models.CharField(max_length=150)
+    resourcePool = models.CharField(max_length=150, null=True)
     powerState = models.CharField(max_length=150, null=True)
     ipAdress = models.CharField(max_length=150, null=True)
     toolsStatus = models.CharField(max_length=150, null=True)
