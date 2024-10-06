@@ -1,7 +1,6 @@
 __pycache__/
 *.py[cod]
 venv/
-migrations/
 .env
 db.sqlite3
 old.py
