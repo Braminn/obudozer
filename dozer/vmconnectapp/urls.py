@@ -12,4 +12,5 @@ urlpatterns = [
     path('dbupdte_func', views.dbupdte_func),
     path('vmtools/', ViewVMtolls.as_view()),
     path('bados/', ViewBadOS.as_view()),
+    path('badexport/', ViewBadOSExport.as_view()),
 ]

@@ -35,9 +35,9 @@ ALLOWED_HOSTS = ['localhost', '127.0.0.1', 'obudozer.admlr.loc']
 # CSRF settings
 
 if DEBUG:
-    CSRF_TRUSTED_ORIGINS = ['http://obudozer.admlr.loc', 'https://obudozer.admlr.loc']
+    CSRF_TRUSTED_ORIGINS = ['http://obudozer.admlr.lipetsk.ru', 'https://obudozer.admlr.lipetsk.ru']
 if not DEBUG:
-    CSRF_TRUSTED_ORIGINS = ['http://obudozer.admlr.loc/', 'https://obudozer.admlr.loc/'] # FIX admin CSRF token issue
+    CSRF_TRUSTED_ORIGINS = ['https://obudozer.admlr.lipetsk.ru', 'https://obudozer.admlr.lipetsk.ru'] # FIX admin CSRF token issue
 
 # Application definition
 
@@ -145,7 +145,6 @@ DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 
 
 # .env
-
 VC_HOST = os.getenv('VC_HOST')
 VC_USER = os.getenv('VC_USER')
 VC_PWD = os.getenv('VC_PWD')

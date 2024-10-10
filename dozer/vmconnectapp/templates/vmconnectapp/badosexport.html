@@ -61,18 +61,12 @@
         <tbody>
             {% for item in vms %}
             <tr>
-                <td><b>{{ item.name }}</b></br>
-                    {{ item.resourcePool }}</br>
-                    {{ item.powerState }}
-                </td>
-                <td>{{ item.toolsStatus }}</br>
-                    {{ item.vmtoolsdescription }}</br>
-                    {{ item.ipAdress }}
-                </td>
-                <td><b>{{ item.prettyName }}</b></br>
-                    {{ item.familyName }} / x{{ item.bitness }} </br>                    
-                    {{ item.kernelVersion }}
-                </td>
+                <td>{{ item.resourcePool }}</td>
+                <td><b>{{ item.name }}</b></td>
+                <td>{{ item.ipAdress }}</td>
+                <td>{{ item.prettyName }}</td>
+                <td>{{ item.familyName }} / x{{ item.bitness }}</td>
+                <td>{{ item.kernelVersion }}</td>
             </tr>
             {% endfor %}
         </tbody>
