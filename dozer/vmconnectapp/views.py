@@ -101,6 +101,7 @@ def dbupdate():
         osInfo = {}
         vmtoolsdesc = None
         vmtoolsver = None
+        cms_cf = None
 
         for block in child.config.extraConfig:
             if block.key == 'guestinfo.vmtools.description':
@@ -148,7 +149,8 @@ def dbupdate():
         else:
             full_path_form = full_path  # Если подстрока не найдена, оставляем строку без изменений
 
-        print(full_path_form)   
+        print(full_path_form)  
+        # print(child.customValue)
         print(" ")     
 
         # resource_pool = child.resourcePool
@@ -183,6 +185,18 @@ def dbupdate():
         #else:
             #print(osInfo['prettyName'], ' уже в списке уникальных ОС')
 
+        if child.customValue:
+                for custom_field in child.customValue:
+                    field_key = custom_field.key
+                    field_value = custom_field.value
+                    
+                    # Получаем название поля по ключу
+                    custom_fields_manager = content.customFieldsManager
+                    for field in custom_fields_manager.field:
+                        if field.key == field_key and field.name == 'CMS':
+                            print(f"Custom Attribute '{'CMS'}' for VM '{child.name}': {field_value}")
+                            cms_cf = field_value
+
         x = Vms(name = child.summary.config.name, 
                 powerState = child.summary.runtime.powerState,
                 resourcePool = full_path_form,
@@ -196,6 +210,7 @@ def dbupdate():
                 distroVersion = osInfo['distroVersion'],
                 kernelVersion = osInfo['kernelVersion'],
                 bitness = osInfo['bitness'],
+                cms = cms_cf
                 )
         x.save()
 

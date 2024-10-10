@@ -17,6 +17,7 @@ class Vms(models.Model):
     distroVersion = models.CharField(max_length=150, null=True)
     kernelVersion = models.CharField(max_length=150, null=True)
     bitness = models.CharField(max_length=150, null=True)
+    cms = models.CharField(max_length=150, null=True)
 
     def __str__(self):
         return self.name
