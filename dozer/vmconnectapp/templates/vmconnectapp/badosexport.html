@@ -26,19 +26,14 @@
             </li>
             <li>
                 ОС не определена:
-
                 {{ badToolsCount }}
             </li>
             <li>
-
                 Требуют внимания сейчас:
-
                 {{ badOSCount }}
             </li>
             <li>
-
                 Устареют в течение года: 
-
                 {{ badOSCountAfter }}
             </li>
             <li>
@@ -53,9 +48,12 @@
     <table class="table table-striped">
         <thead>
             <tr>
-                <th scope="col">VM</th>
-                <th scope="col">Tools</th>
+                <th scope="col">Pool</th>
+                <th scope="col">Name</th>
+                <th scope="col">IP</th>
                 <th scope="col">OS</th>
+                <th scope="col">CMS</th>
+                <th scope="col">Owner</th>
             </tr>
         </thead>
         <tbody>
@@ -66,7 +64,7 @@
                 <td>{{ item.ipAdress }}</td>
                 <td>{{ item.prettyName }}</td>
                 <td>{{ item.cms }}</td>
-                <td>{{ item.kernelVersion }}</td>
+                <td>{{ item.owner }}</td>                
             </tr>
             {% endfor %}
         </tbody>

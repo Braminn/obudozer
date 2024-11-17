@@ -1,0 +1,7 @@
+
+<form hx-post="{% url 'edit_custom_field' vm.id %}" hx-swap="outerHTML">
+    {% csrf_token %}
+    {{ form.cms }}
+    <button type="submit">Сохранить</button>
+    {% comment %} <button hx-get="{% url 'edit_custom_field_cancel' vm.id %}" hx-swap="outerHTML">Отмена</button> {% endcomment %}
+</form>

@@ -1,3 +1,5 @@
+dozer.code-workspace
+.pylintrc
 __pycache__/
 *.py[cod]
 venv/

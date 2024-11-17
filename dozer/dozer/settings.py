@@ -21,10 +21,10 @@ BASE_DIR = Path(__file__).resolve().parent.parent
 # Quick-start development settings - unsuitable for production
 # See https://docs.djangoproject.com/en/4.2/howto/deployment/checklist/
 
-# SECURITY WARNING: keep the secret key used in production secret!
-
+# .env secret data load
 load_dotenv()
 
+# SECURITY WARNING: keep the secret key used in production secret!
 SECRET_KEY = os.getenv('SECRET_KEY')
 
 # SECURITY WARNING: don't run with debug turned on in production!
@@ -33,14 +33,13 @@ DEBUG = True
 ALLOWED_HOSTS = ['localhost', '127.0.0.1', 'obudozer.admlr.loc']
 
 # CSRF settings
-
 if DEBUG:
     CSRF_TRUSTED_ORIGINS = ['http://obudozer.admlr.lipetsk.ru', 'https://obudozer.admlr.lipetsk.ru']
 if not DEBUG:
-    CSRF_TRUSTED_ORIGINS = ['https://obudozer.admlr.lipetsk.ru', 'https://obudozer.admlr.lipetsk.ru'] # FIX admin CSRF token issue
+    # FIX admin CSRF token issue
+    CSRF_TRUSTED_ORIGINS = ['https://obudozer.admlr.lipetsk.ru', 'https://obudozer.admlr.lipetsk.ru']
 
 # Application definition
-
 INSTALLED_APPS = [
     'django.contrib.admin',
     'django.contrib.auth',
@@ -62,6 +61,33 @@ MIDDLEWARE = [
     'django.contrib.messages.middleware.MessageMiddleware',
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
 ]
+
+LOGGING = {
+    'version': 1,
+    'disable_existing_loggers': False,
+
+    'formatters': {
+        'main_format': {
+            'format': '{asctime} - {levelname} - {module} - {filename} - {message}',
+            'style': '{',
+        },
+    },
+
+    'handlers': {
+        'console': {
+            'class': 'logging.StreamHandler',
+            'formatter': 'main_format',
+        },
+    },
+
+    'loggers': {
+        'main': {
+            'handlers': ['console'],
+            'level': 'DEBUG',
+            'propagate': True,
+        },
+    },
+}
 
 ROOT_URLCONF = 'dozer.urls'
 
