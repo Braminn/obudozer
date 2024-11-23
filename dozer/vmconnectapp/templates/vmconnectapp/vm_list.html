@@ -26,18 +26,10 @@
         <td>
             <div id="custom-field-{{ vm.id }}" hx-get="{% url 'edit_custom_field' vm.id %}" hx-target="this" hx-swap="outerHTML">
                 {{ vm.cms }}
-                {% comment %} <button hx-get="{% url 'edit_custom_field' vm.id %}" hx-target="#custom-field-{{ vm.id }}" hx-swap="outerHTML">
-                    Редактировать
-                </button> {% endcomment %}
             </div>
         </td>
-        {% comment %} <td>
-            <div id="custom-field-{{ vm.id }}"></div>
-        </td> {% endcomment %}
     </tr>
     {% endfor %}
 </table>
-
-
 
 {% endblock content %}
