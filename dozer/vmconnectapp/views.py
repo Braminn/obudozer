@@ -10,7 +10,7 @@ from django.urls import reverse
 
 from .vconnect import dbupdate, update_custom_field
 
-from .models import Vms, Oss
+from .models import Vms, Oss, Domain
 from .forms import VmForm
 
 
@@ -240,3 +240,9 @@ def dbupdte_func(request):
     ''' Кнопка обновления БД '''
     dbupdate()
     return HttpResponse("""<html><script>window.location.replace('/');</script></html>""")
+
+
+class DomainListView(ListView):
+    model = Domain
+    template_name = 'domains/domain_list.html'  # Путь к вашему шаблону
+    context_object_name = 'domains'  # Контекст, который будет доступен в шаблоне

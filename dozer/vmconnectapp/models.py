@@ -1,4 +1,7 @@
 ''' models.py '''
+import os
+import re
+import logging
 from django.db import models
 
 
@@ -37,3 +40,83 @@ class Oss(models.Model):
         verbose_name = 'Операционные системы'
         verbose_name_plural = 'Операционная система'
         ordering = ('prettyName',)
+
+
+# Путь к папкам с конфигурациями Nginx
+NGINX_SITES_ENABLED = '/home/ladmin/nginx-configurations-obu-main/sites-enabled'
+NGINX_SSL = '/home/ladmin/nginx-configurations-obu-main/ssl'
+
+# NGINX_SITES_ENABLED = '/home/stegancevva@ADMLR.LOC/py/nginx-configurations-obu-main/sites-enabled/'
+# NGINX_SSL = '/home/stegancevva@ADMLR.LOC/py/nginx-configurations-obu-main/ssl'
+
+# Настраиваем логирование
+logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(levelname)s - %(message)s')
+
+# Регулярное выражение для поиска доменных имен
+DOMAIN_REGEX = re.compile(r'\s*server_name\s+([a-zA-Z0-9.-]+);')
+
+class Domain(models.Model):
+    """
+    Модель для хранения доменных имен.
+    """
+    name = models.CharField(max_length=255, unique=True)
+
+    def __str__(self):
+        return str(self.name)
+
+
+def parse_nginx_config():
+    """
+    Парсит конфигурационные файлы Nginx для извлечения доменных имен.
+    """
+    domains = set()
+    config_dirs = [NGINX_SITES_ENABLED, NGINX_SSL]
+
+    for config_dir in config_dirs:
+        if not os.path.isdir(config_dir):
+            logging.warning(f"Директория не найдена: {config_dir}")
+            continue
+
+        logging.info(f"Читаем файлы из директории: {config_dir}")
+        for filename in os.listdir(config_dir):
+            file_path = os.path.join(config_dir, filename)
+            if not os.path.isfile(file_path):
+                logging.warning(f"Пропускаем, так как это не файл: {file_path}")
+                continue
+
+            try:
+                with open(file_path, 'r') as file:
+                    content = file.read()
+                    matches = DOMAIN_REGEX.findall(content)
+
+                    if matches:
+                        logging.info(f"Найдены домены в файле {filename}: {', '.join(matches)}")
+                        domains.update(matches)
+                    else:
+                        logging.info(f"В файле {filename} доменные имена не найдены")
+            except Exception as e:
+                logging.error(f"Ошибка при чтении файла {file_path}: {e}")
+
+    logging.info(f"Обнаружено всего доменов: {len(domains)}")
+    return domains
+
+
+def save_domains_to_db():
+    """
+    Сохраняет найденные доменные имена в базу данных.
+    """
+    domains = parse_nginx_config()
+
+    if not domains:
+        logging.warning("Нет доменов для сохранения в базу данных")
+        return
+
+    for domain in domains:
+        try:
+            obj, created = Domain.objects.get_or_create(name=domain)
+            if created:
+                logging.info(f"Добавлен новый домен: {domain}")
+            else:
+                logging.info(f"Домен уже существует: {domain}")
+        except Exception as e:
+            logging.error(f"Ошибка при сохранении домена {domain}: {e}")

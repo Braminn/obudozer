@@ -10,7 +10,8 @@ from .views import (
     ViewBadOSExport,
     VmListView,
     VmEditView,
-    VmEditCancelView
+    VmEditCancelView,
+    DomainListView,
     )
 from . import views
 
@@ -27,4 +28,5 @@ urlpatterns = [
     path('vm_list/', VmListView.as_view(), name='vm_list'),
     path('vm/edit/<int:vm_id>/', VmEditView.as_view(), name='edit_custom_field'),
     path('vm/edit/<int:vm_id>/cancel/', VmEditCancelView.as_view(), name='edit_custom_field_cancel'),
+    path('domains/', DomainListView.as_view(), name='domain_list'),
 ]
