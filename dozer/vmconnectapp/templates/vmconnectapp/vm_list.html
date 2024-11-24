@@ -2,14 +2,6 @@
 
 {% block content %}
 
- {% comment %} 
- <!-- <style>
-    form:-webkit-any(table, thead, tbody, tfoot, tr) {
-        display: block !important;
-    } 
-</style>  -->
-{% endcomment %}
-
 <table>
     <tr>
         <th>Название ВМ</th>
@@ -18,18 +10,22 @@
     </tr>
 
     {% for vm in vms %}
-
     <tr>
         <td>
             {{ vm.name }}
         </td>
         <td>
-            <div id="custom-field-{{ vm.id }}" hx-get="{% url 'edit_custom_field' vm.id %}" hx-target="this" hx-swap="outerHTML">
+            <div id="custom-field-{{ vm.id }}" 
+                 hx-get="{% url 'edit_custom_field' vm.id %}" 
+                 hx-target="this" 
+                 hx-swap="outerHTML"
+                 hx-trigger="click">
                 {{ vm.cms }}
             </div>
         </td>
     </tr>
     {% endfor %}
+    
 </table>
 
 {% endblock content %}

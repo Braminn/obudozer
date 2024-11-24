@@ -186,7 +186,7 @@ def dbupdate():
                     if field.key == field_key and field.name == 'Owner':
                         owner_cf = field_value
 
-        x = Vms(name = child.summary.config.name, 
+        x = Vms(name = child.summary.config.name,
                 powerState = child.summary.runtime.powerState,
                 resourcePool = full_path_form,
                 ipAdress = child.summary.guest.ipAddress,

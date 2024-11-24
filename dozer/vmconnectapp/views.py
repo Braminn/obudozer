@@ -6,11 +6,9 @@ from datetime import datetime, timedelta
 from django.shortcuts import get_object_or_404, render
 from django.views.generic import ListView, View
 from django.http import HttpResponse
+from django.urls import reverse
 
-from pyVim.connect import Disconnect
-from pyVmomi import vim
-
-from .vconnect import vcenter_connect, dbupdate, update_custom_field
+from .vconnect import dbupdate, update_custom_field
 
 from .models import Vms, Oss
 from .forms import VmForm
@@ -221,45 +219,18 @@ class VmEditView(View):
             if not success:
                 return HttpResponse("Ошибка при обновлении кастомного поля", status=500)
 
-            # # Подключаемся к vCenter и обновляем кастомное поле
-            # logger.info('Подключаемся к vCenter...')
-            # si = vcenter_connect()
-            # custom_field_manager = si.content.customFieldsManager
-
-            # # Используем CreateContainerView для поиска ВМ по имени
-            # vms_view = si.content.viewManager.CreateContainerView(si.content.rootFolder, [vim.VirtualMachine], True)
-            # vm_from_vc = None
-            # for vm_object in vms_view.view:
-            #     if vm_object.name == vm_instance.name:  # Поиск по имени
-            #         vm_from_vc = vm_object
-            #         break
-
-            # logger.debug('vm - %s', vm_from_vc.name)
-            # if vm_from_vc:
-            #     field_key = None
-            #     field_name = "CMS"  # Укажите ваше имя кастомного поля
-            #     for field in custom_field_manager.field:
-            #         if field.name == field_name:
-            #             field_key = field.key
-            #             break
-
-            #     if field_key:
-            #         try:
-            #             custom_field_manager.SetField(entity=vm_from_vc, key=field_key, value=vm_instance.cms)
-            #             logger.info("Успешно обновлено кастомное поле: %s", vm_instance.cms)
-            #         except vim.fault.NoPermission as e:
-            #             logger.error("NoPermission error: %s", e.privilegeId)
-            #         except vim.fault.InvalidArgument as e:
-            #             logger.error("InvalidArgument error: %s", e.msg)
-            #         except vim.fault.InvalidType as e:
-            #             logger.error("InvalidType error: %s", e)
-            #         except ImportError as e:
-            #             logger.error("An unexpected error occurred: %s", str(e))
-
-            # Disconnect(si)
-
             if request.headers.get('HX-Request'):  # Если запрос через HTMX
-                html = f'<td id="custom-field-{vm_instance.id}">{vm_instance.cms}</td>'
+                # Возврат нового HTML с HTMX-атрибутами
+                edit_url = reverse('edit_custom_field', args=[vm_instance.id])
+                html = f'''
+                <div id="custom-field-{vm_instance.id}" 
+                    hx-get="{edit_url}" 
+                    hx-target="this" 
+                    hx-swap="outerHTML" 
+                    hx-trigger="click">
+                    {vm_instance.cms}
+                </div>
+                '''
                 return HttpResponse(html)
 
         return render(request, 'vmconnectapp/partials/edit_custom_field_form.html', {'form': form, 'vm': vm_instance})
