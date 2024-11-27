@@ -8,11 +8,12 @@ from tqdm import tqdm
 
 from django.conf import settings
 from django.db import transaction
+from django.utils.timezone import now
 
 from pyVim.connect import SmartConnect, Disconnect
 from pyVmomi import vim
 
-from .models import Vms, Oss
+from .models import Vms, Oss, SystemInfo
 
 logger = logging.getLogger('main')
 logger.setLevel(logging.DEBUG)
@@ -227,6 +228,16 @@ def sync_pretty_names_with_db(vms):
     new_oss_entries = [Oss(prettyName=name) for name in unique_pretty_names]
     Oss.objects.bulk_create(new_oss_entries)
     print(f"Добавлено новых записей: {len(new_oss_entries)}")
+
+
+def last_db_update_time():
+    """
+    Обновляет запись с датой и временем последнего обновления базы данных.
+    """
+    SystemInfo.objects.update_or_create(
+        name="last_update_time",
+        defaults={"value": now().isoformat()}  # Сохраняем дату и время в формате ISO
+    )
 
 
 def update_custom_field(vm_name, field_name, field_value):

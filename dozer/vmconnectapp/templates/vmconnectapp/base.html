@@ -24,24 +24,22 @@
         <a href="/" class="d-flex align-items-center mb-3 mb-md-0 me-md-auto link-body-emphasis text-decoration-none">
             <span class="fs-4">OBU Dozer</span><br>
         </a>   
-        <span style="font-size: 70%">0.0.20           </span>
+        <span style="font-size: 70%">0.0.21           </span>
         <ul class="nav nav-pills">
             <li class="nav-item"><a href="/" class="nav-link">Главная</a></li>
             <li class="nav-item"><a href="/vmtools" class="nav-link">VMtools</a></li>
             <li class="nav-item"><a href="/bados" class="nav-link">OS</a></li>
             <li class="nav-item"><a href="/domains" class="nav-link">Domains</a></li>
             <li class="nav-item">    
-                <form method="POST" hx-post="{% url 'dbupdte_func' %}" hx-target="#spinner" hx-indicator="#spinner" >
+                <form method="POST" hx-post="{% url 'dbupdte_func' %}" hx-target="#result" hx-indicator="#spinner" >
                     {% csrf_token %}
                     <button class="btn btn-outline-danger">
                         Обновить БД
                     </button>
+                    <span id="spinner" class="spinner-border spinner-border-sm htmx-indicator"></span>
                 </form>
-                <span id="spinner" class="htmx-indicator">⏳ Обновление...</span>
-                {% comment %} <form action="/dbupdte_func">
-                    {% csrf_token %}
-                    <input type="submit" value="Синхронизировать" class="btn btn-outline-danger" />
-                </form>   {% endcomment %}
+                <div id="result">{{ last_update_time }}</div>
+                
             </li>
         </ul>
         </header>
@@ -53,10 +51,5 @@
 
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js" integrity="sha384-YvpcrYf0tY3lHB60NNkmXc5s9fDVZLESaAA55NDzOxhy9GkcIdslK1eN7N6jIeHz" crossorigin="anonymous"></script>
     <script src="https://unpkg.com/htmx.org@1.9.2"></script>
-    <script>
-        document.body.addEventListener('htmx:beforeRequest', function () {
-            document.getElementById('spinner').classList.remove('hidden');
-        });
-    </script>
 </body>
 </html>

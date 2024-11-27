@@ -5,12 +5,13 @@ from concurrent.futures import ThreadPoolExecutor
 
 from django.shortcuts import get_object_or_404, render
 from django.views.generic import ListView, View
+from django.utils.timezone import make_aware, localtime
 from django.http import HttpResponse
 from django.urls import reverse
 
-from .vconnect import fetch_vcenter_data, save_vms_to_db, sync_pretty_names_with_db, update_custom_field
+from .vconnect import fetch_vcenter_data, save_vms_to_db, sync_pretty_names_with_db, update_custom_field, last_db_update_time
 
-from .models import Vms, Oss, Domain
+from .models import Vms, Oss, SystemInfo, Domain
 from .forms import VmForm
 
 
@@ -244,7 +245,8 @@ def dbupdate_task():
     vms = fetch_vcenter_data()
     save_vms_to_db(vms)
     sync_pretty_names_with_db(vms)
-    return "Завершено!"  # Вернуть сообщение о завершении работы
+    last_db_update_time()
+    return "Обновлено!"  # Вернуть сообщение о завершении работы
 
 
 def dbupdte_func(request):
@@ -254,7 +256,21 @@ def dbupdte_func(request):
     # Запускаем задачу в отдельном потоке и ждем завершения
     future = executor.submit(dbupdate_task)
     result = future.result()  # Дождемся завершения задачи и получим результат
-    return HttpResponse(f'<div id="update-status">{result}</div>')
+    logger.info('Результат ассинхронной функции - %s', result)
+
+    last_update = SystemInfo.objects.filter(name="last_update_time").first()
+    if last_update and last_update.value:
+        # Преобразуем строку в объект datetime
+        update_time = datetime.fromisoformat(last_update.value)
+        # Делаем время "осведомленным" о часовом поясе
+        aware_time = make_aware(update_time) if update_time.tzinfo is None else update_time
+        # Приводим к локальному часовому поясу
+        local_time = localtime(aware_time)
+        # Форматируем дату
+        readable_time = local_time.strftime("%d.%m.%Y, %H:%M")
+        return HttpResponse(f'<div id="update-status">{readable_time}</div>')
+    else:
+        return HttpResponse('<div id="update-status">Время обновления отсутствует</div>')
 
 
 class DomainListView(ListView):

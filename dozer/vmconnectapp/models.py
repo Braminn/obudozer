@@ -42,6 +42,17 @@ class Oss(models.Model):
         ordering = ('prettyName',)
 
 
+class SystemInfo(models.Model):
+    ''' Служебная модель '''
+    name = models.CharField(max_length=255, unique=True)
+    value = models.TextField(blank=True, null=True)
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+
+    def __str__(self):
+        return f"{self.name}: {self.value}"
+
+
 # Путь к папкам с конфигурациями Nginx
 NGINX_SITES_ENABLED = '/home/ladmin/nginx-configurations-obu-main/sites-enabled'
 NGINX_SSL = '/home/ladmin/nginx-configurations-obu-main/ssl'
