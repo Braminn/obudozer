@@ -8,7 +8,7 @@ from django.views.generic import ListView, View
 from django.http import HttpResponse
 from django.urls import reverse
 
-from .vconnect import dbupdate, update_custom_field
+from .vconnect import fetch_vcenter_data, save_vms_to_db, sync_pretty_names_with_db, update_custom_field
 
 from .models import Vms, Oss, Domain
 from .forms import VmForm
@@ -238,7 +238,9 @@ class VmEditView(View):
 
 def dbupdte_func(request):
     ''' Кнопка обновления БД '''
-    dbupdate()
+    vms = fetch_vcenter_data()
+    save_vms_to_db(vms)
+    sync_pretty_names_with_db(vms)
     return HttpResponse("""<html><script>window.location.replace('/');</script></html>""")
 
 

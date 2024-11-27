@@ -1,7 +1,13 @@
 ''' Все операции с подлкючением и работой pyvmomi vCenter '''
+import re
+import time
 import logging
+from functools import wraps
+
+from tqdm import tqdm
 
 from django.conf import settings
+from django.db import transaction
 
 from pyVim.connect import SmartConnect, Disconnect
 from pyVmomi import vim
@@ -27,184 +33,200 @@ def vcenter_connect():
     return service_instance
 
 
-def dbupdate():
-    ''' Основная функция заполнения данных из vCinter'''
-    logger.info('Подключаемся к vCenter...')
+def time_of_function(func):
+    """
+    Декоратор для отображения времени выполнения функции
+    """
+    @wraps(func)
+    def wrapper(*args, **kwargs):  # Добавляем *args и **kwargs
+        t1 = time.time()
+        result = func(*args, **kwargs)  # Передаем аргументы в оборачиваемую функцию
+        t2 = time.time()
+        print(f'Время выполнения функции - {t2 - t1} секунд')
+        print('')
+        return result  # Возвращаем результат функции
+    return wrapper
+
+
+def get_guest_info(vm):
+    """
+    Извлекает и парсит данные guestInfo.detailed.data для виртуальной машины.
+    Возвращает словарь с ключами prettyName, familyName и distroName.
+    """
+    try:
+        # Извлекаем данные по ключу 'guestInfo.detailed.data'
+        detailed_data = next(
+            (opt.value for opt in vm.config.extraConfig if opt.key == 'guestInfo.detailed.data'),
+            None
+        )
+
+        # Если данные найдены, парсим их
+        if detailed_data:
+            parsed_data = dict(re.findall(r"(\w+)='([^']*)'", detailed_data))
+            return {
+                "prettyName": parsed_data.get('prettyName'),
+                "familyName": parsed_data.get('familyName'),
+                "distroName": parsed_data.get('distroName'),
+                "distroVersion": parsed_data.get('distroVersion'),
+                "kernelVersion": parsed_data.get('kernelVersion'),
+                "bitness": parsed_data.get('bitness'),
+            }
+    except AttributeError:
+        # Если vm.config.extraConfig или другие атрибуты отсутствуют
+        pass
+
+    # Возвращаем None для всех значений, если данных нет
+    return {
+        "prettyName": None,
+        "familyName": None,
+        "distroName": None,
+        "distroVersion": None,
+        "kernelVersion": None,
+        "bitness": None,
+    }
+
+
+def get_custom_field(vm, field_name):
+    """
+    Извлекает значение кастомного поля по имени.
+    """
+    try:
+        # Построим словарь для поиска по имени кастомного поля
+        field_map = {field.key: field.name for field in vm.availableField}
+        for field in vm.customValue:
+            if hasattr(field, 'key') and field.key in field_map:
+                if field_map[field.key] == field_name:
+                    return field.value
+    except AttributeError:
+        return None  # Если customValue или availableField отсутствуют
+    return None  # Если поле не найдено
+
+
+def get_resource_pool_path(resource_pool):
+    """
+    Построение полного пути для Resource Pool.
+    """
+    try:
+        path = []
+        current = resource_pool
+        while current:
+            path.insert(0, current.name)
+            current = current.parent if isinstance(current, vim.ResourcePool) else None
+        return '/'.join(path)
+    except AttributeError:
+        return None  # Если структура Resource Pool нарушена
+
+
+@time_of_function
+def fetch_vcenter_data():
+    """
+    Основная функция для получения данных из vCenter и сохранения в базу данных.
+    """
+    print('Начинаем получение данных из vCenter...')
     si = vcenter_connect()
-    logger.info('Получаем данные из vCenter...')
     content = si.RetrieveContent()
-    
-    # ---------------------
+    obj_view = content.viewManager.CreateContainerView(content.rootFolder, [vim.VirtualMachine,  vim.ResourcePool], True)
 
-    container = content.rootFolder
-    view_type = [vim.VirtualMachine]
-    recursive = True
-    container_view = content.viewManager.CreateContainerView(
-            container, view_type, recursive)
-    children = container_view.view
+    vms = {}
+    resource_pools = {}
+    total_vms = len(obj_view.view)
+    print(f"Всего объектов для обработки: {total_vms}")
 
-    # Очищаем БД перед обновлением
-    logger.info('Очищаем БД Vms')
-    Vms.objects.all().delete()
-    # logger.info('Очищаем БД Oss')
-    # Oss.objects.all().delete()
+    for vm in tqdm(obj_view.view, desc="Обработка объектов", unit="OBJ"):
+        if isinstance(vm, vim.VirtualMachine):
+            guest_details = get_guest_info(vm) # Вызываем функцию парсинга guestInfo.detailed.data
+            resource_pool_path = (get_resource_pool_path(vm.resourcePool) if vm.resourcePool else None) # Вызываем функцию преобразования полного пути ресурсного пула
+            vms[vm.name] = {
+                "powerState": vm.runtime.powerState if vm.runtime else None,
+                "resourcePool": resource_pool_path,
+                "ipAdress": vm.guest.ipAddress if vm.guest and vm.guest.ipAddress else None,
+                "toolsStatus": vm.guest.toolsStatus if vm.guest and vm.guest.toolsStatus else None,
+                "vmtoolsdescription": next((opt.value for opt in getattr(vm.config, 'extraConfig', []) if getattr(opt, 'key', None) == 'guestinfo.vmtools.description'), None),
+                "vmtoolsversionNumber": next((opt.value for opt in getattr(vm.config, 'extraConfig', []) if getattr(opt, 'key', None) == 'guestinfo.vmtools.versionNumber'), None),
+                "prettyName": guest_details["prettyName"],
+                "familyName": guest_details["familyName"],
+                "distroName": guest_details["distroName"],
+                "distroVersion": guest_details["distroVersion"],
+                "kernelVersion": guest_details["kernelVersion"],
+                "bitness": guest_details["bitness"],
+                "cms": get_custom_field(vm, "cms"),
+            }
+        elif isinstance(vm, vim.ResourcePool):
+            resource_pools[vm.name] = {
+                "parent": vm.parent.name if vm.parent else None,
+            }
 
-    # Функция для получения объекта Resource Pool по его имени
-    def get_resource_pool_by_name(content, pool_name):
-        # Поиск всех датацентров
-        for datacenter in content.rootFolder.childEntity:
-            # Поиск всех кластеров и хостов в датацентре
-            for cluster in datacenter.hostFolder.childEntity:
-                if hasattr(cluster, 'resourcePool'):
-                    # Если есть Resource Pool, проверим его и его дочерние объекты
-                    rp = cluster.resourcePool
-                    found_rp = find_pool_recursive(rp, pool_name)
-                    if found_rp:
-                        return found_rp
-        return None
+    # print("Vms:")
+    # for vm_name, vm_data in vms.items():
+    #     print(f"{vm_name}: {vm_data}")
+    #     print(" ")
 
-
-    def find_pool_recursive(pool, pool_name):
-        # Рекурсивная функция для поиска Resource Pool по имени
-        if pool is not None and hasattr(pool, 'name'):
-            if pool.name == pool_name:
-                return pool
-
-        if hasattr(pool, 'resourcePool'):
-            for child in pool.resourcePool:
-                found = find_pool_recursive(child, pool_name)
-                if found:
-                    return found
-        return None
-
-    def get_resource_pool_path(pool):
-        # Функция для получения полного пути Resource Pool
-        path = pool.name
-        parent = pool.parent
-        # Проходим по иерархии объектов до корневого (обычно это кластер)
-        while hasattr(parent, 'name'):
-            path = f"{parent.name}/{path}"
-            parent = parent.parent
-        return path
-
-    # Основной цикл заполения БД
-    logger.info('Загружаем записи: %s', len(children))
-    for child in children:
-        # Имя обрабатываемой ВМ
-        logger.info(child.summary.config.name)
-
-        full_path_form = None
-        osInfo = {}
-        vmtoolsdesc = None
-        vmtoolsver = None
-        cms_cf = None
-        owner_cf = None
-
-        for block in child.config.extraConfig:
-            if block.key == 'guestinfo.vmtools.description':
-                vmtoolsdesc = block.value
-            # else:
-            #     vmtoolsdesc = None
-
-            if block.key == 'guestinfo.vmtools.versionNumber':
-                vmtoolsver = block.value
-            # else:
-            #     vmtoolsver = None
-
-            if block.key == 'guestInfo.detailed.data':
-                osInfo = eval("{'" + block.value.replace('=', "':").replace("' ", "', '") + "}")   
-
-        if 'prettyName' not in osInfo:
-            osInfo['prettyName'] = None
-
-        if child.resourcePool is not None and hasattr(child.resourcePool, 'name'):
-            # print(child.resourcePool.name)
-            # Имя ресурсного пула, путь которого нужно получить
-            pool_name = child.resourcePool.name
-        else:
-            pool_name = None
-
-        # Поиск ресурсного пула
-        resource_pool = get_resource_pool_by_name(content, pool_name)
-        full_path = None
-
-        if resource_pool:
-            # Получение полного пути ресурсного пула
-            full_path = get_resource_pool_path(resource_pool)
-            # print(f"Полный путь ресурсного пула: {full_path}")
-            substring = "Datacenters/ADMLR/host/"
-            # Находим индекс начала подстроки
-            index = full_path.find(substring)
-                    # Если подстрока найдена, обрезаем строку
-            if index != -1:
-                full_path_form = full_path[index + len(substring):]
-            else:
-                full_path_form = full_path  # Если подстрока не найдена, оставляем строку без изменений
-        else:
-            logger.warning("Ресурсный пул с именем %s не найден.", pool_name)
-
-        # print(full_path_form)
-        # print(child.customValue)
-        # print(" ")
-        # resource_pool = child.resourcePool
-        # if resource_pool:
-        #     print(f"Resource Pool для виртуальной машины {osInfo['prettyName']}: {resource_pool.name}")
-        #     resource_pool_name = resource_pool.name
-        # else:
-        #     resource_pool_name = None
-        #     #print(f"Виртуальная машина {osInfo['prettyName']} не присоединена к Resource Pool.")
-
-        if 'familyName' not in osInfo:
-            osInfo['familyName'] = None
-        if 'distroName' not in osInfo:
-            osInfo['distroName'] = None
-        if 'distroVersion' not in osInfo:
-            osInfo['distroVersion'] = None
-        if 'kernelVersion' not in osInfo:
-            osInfo['kernelVersion'] = None
-        if 'bitness' not in osInfo:
-            osInfo['bitness'] = None
-
-        # Заполнение модель Oss уникальными ОС
-        if not Oss.objects.filter(prettyName = osInfo['prettyName']).exists():
-            #print(osInfo['prettyName'], ' добавлена в список уникальных ОС')
-            o = Oss(prettyName = osInfo['prettyName'],)
-            o.save()
-        #else:
-            #print(osInfo['prettyName'], ' уже в списке уникальных ОС')
-
-        if child.customValue:
-            for custom_field in child.customValue:
-                field_key = custom_field.key
-                field_value = custom_field.value
-
-                # Получаем название поля по ключу
-                custom_fields_manager = content.customFieldsManager
-                for field in custom_fields_manager.field:
-                    if field.key == field_key and field.name == 'CMS':
-                        # print(f"Custom Attribute '{'CMS'}' for VM '{child.name}': {field_value}")
-                        cms_cf = field_value
-                    if field.key == field_key and field.name == 'Owner':
-                        owner_cf = field_value
-
-        x = Vms(name = child.summary.config.name,
-                powerState = child.summary.runtime.powerState,
-                resourcePool = full_path_form,
-                ipAdress = child.summary.guest.ipAddress,
-                toolsStatus = child.summary.guest.toolsStatus,
-                vmtoolsdescription = vmtoolsdesc,
-                vmtoolsversionNumber = vmtoolsver,
-                prettyName = osInfo['prettyName'],
-                familyName = osInfo['familyName'],
-                distroName = osInfo['distroName'],
-                distroVersion = osInfo['distroVersion'],
-                kernelVersion = osInfo['kernelVersion'],
-                bitness = osInfo['bitness'],
-                cms = cms_cf,
-                owner = owner_cf,
-                )
-        x.save()
+    obj_view.Destroy()
     Disconnect(si)
+    print('Получение данных ид vCenter завершено.')
+
+    return vms
+
+
+@time_of_function
+def save_vms_to_db(vms):
+    """
+    Очищает таблицу Vms и сохраняет объект vms в базу данных.
+    """
+    print('Начинаем сохранение данных в бд...')
+    try:
+        with transaction.atomic():
+            # Удаляем все существующие записи
+            Vms.objects.all().delete()
+            print("Все записи удалены из таблицы Vms.")
+
+            # Сохраняем новые данные
+            for vm_name, vm_data in vms.items():
+                Vms.objects.create(
+                    name=vm_name,
+                    powerState=vm_data.get("powerState"),
+                    resourcePool=vm_data.get("resourcePool"),
+                    ipAdress=vm_data.get("ipAdress"),
+                    toolsStatus=vm_data.get("toolsStatus"),
+                    vmtoolsdescription=vm_data.get("vmtoolsdescription"),
+                    vmtoolsversionNumber=vm_data.get("vmtoolsversionNumber"),
+                    prettyName=vm_data.get("prettyName"),
+                    familyName=vm_data.get("familyName"),
+                    distroName=vm_data.get("distroName"),
+                    distroVersion=vm_data.get("distroVersion"),
+                    kernelVersion=vm_data.get("kernelVersion"),
+                    bitness=vm_data.get("bitness"),
+                    cms=vm_data.get("cms"),
+                )
+        print("Данные успешно сохранены в базу данных.")
+    except ImportError as e:
+        print(f"Ошибка при сохранении данных: {e}")
+
+
+@time_of_function
+def sync_pretty_names_with_db(vms):
+    """
+    Сравнивает значение prettyName в объекте vms с моделью Oss.
+    Если встречается новое значение, оно добавляется в модель Oss.
+    """
+    print('Начинаем поиск новых ОС...')
+    # Получаем все существующие prettyName из модели Oss
+    existing_pretty_names = set(Oss.objects.values_list('prettyName', flat=True))
+
+    # Собираем все unique prettyName из объекта vms
+    new_pretty_names = {
+        vm_data.get('prettyName')
+        for vm_data in vms.values()
+        if vm_data.get('prettyName')  # Учитываем только не None значения
+    }
+
+    # Находим новые prettyName, которых еще нет в модели Oss
+    unique_pretty_names = new_pretty_names - existing_pretty_names
+
+    # Добавляем новые записи в модель Oss
+    new_oss_entries = [Oss(prettyName=name) for name in unique_pretty_names]
+    Oss.objects.bulk_create(new_oss_entries)
+    print(f"Добавлено новых записей: {len(new_oss_entries)}")
 
 
 def update_custom_field(vm_name, field_name, field_value):
