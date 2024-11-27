@@ -113,12 +113,9 @@ def fetch_vcenter_data():
     obj_view = content.viewManager.CreateContainerView(content.rootFolder, [vim.VirtualMachine,  vim.ResourcePool], True)
 
     vms = {}
-    total_vms = len(obj_view.view)
-    print(f"Всего виртуальных машин: {total_vms}")
-
     resource_pools = {}
-    total_rp = len(obj_view.view)
-    print(f"Всего ресурсных пулов: {total_rp}")
+    total_vms = len(obj_view.view)
+    print(f"Всего объектов для обработки: {total_vms}")
 
     for vm in tqdm(obj_view.view, desc="Обработка объектов", unit="OBJ"):
         if isinstance(vm, vim.VirtualMachine):
