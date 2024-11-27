@@ -1,7 +1,7 @@
 ''' views.py '''
-
 import logging
 from datetime import datetime, timedelta
+from concurrent.futures import ThreadPoolExecutor
 
 from django.shortcuts import get_object_or_404, render
 from django.views.generic import ListView, View
@@ -17,6 +17,7 @@ from .forms import VmForm
 logger = logging.getLogger('main')
 logger.setLevel(logging.DEBUG)
 
+executor = ThreadPoolExecutor(max_workers=1)  # Ограничиваем до одного фонового потока
 
 class IndexVms(ListView):
     model = Vms
@@ -236,12 +237,24 @@ class VmEditView(View):
         return render(request, 'vmconnectapp/partials/edit_custom_field_form.html', {'form': form, 'vm': vm_instance})
 
 
-def dbupdte_func(request):
-    ''' Кнопка обновления БД '''
+def dbupdate_task():
+    """
+    Задача для обновления базы данных.
+    """
     vms = fetch_vcenter_data()
     save_vms_to_db(vms)
     sync_pretty_names_with_db(vms)
-    return HttpResponse("""<html><script>window.location.replace('/');</script></html>""")
+    return "Завершено!"  # Вернуть сообщение о завершении работы
+
+
+def dbupdte_func(request):
+    """
+    Кнопка обновления БД.
+    """
+    # Запускаем задачу в отдельном потоке и ждем завершения
+    future = executor.submit(dbupdate_task)
+    result = future.result()  # Дождемся завершения задачи и получим результат
+    return HttpResponse(f'<div id="update-status">{result}</div>')
 
 
 class DomainListView(ListView):

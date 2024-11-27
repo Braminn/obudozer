@@ -21,7 +21,7 @@ urlpatterns = [
     path('vmspoweredoff/', IndexVmsPoweredOff.as_view()),
     path('techvm/', IndexVmstechVM.as_view()),
     path('vmsall/', IndexVmsAll.as_view()),
-    path('dbupdte_func', views.dbupdte_func),
+    path('dbupdte_func', views.dbupdte_func, name='dbupdte_func'),
     path('vmtools/', ViewVMtolls.as_view()),
     path('bados/', ViewBadOS.as_view()),
     path('badexport/', ViewBadOSExport.as_view()),
