@@ -212,7 +212,7 @@ class VmEditView(View):
             # Вызываем функцию для обновления кастомного поля
             success = update_custom_field(
                 vm_name=vm_instance.name,
-                field_name="CMS",
+                field_name="cms",
                 field_value=vm_instance.cms,
             )
 

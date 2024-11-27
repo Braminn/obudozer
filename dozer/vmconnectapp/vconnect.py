@@ -29,12 +29,13 @@ def vcenter_connect():
 
 def dbupdate():
     ''' Основная функция заполнения данных из vCinter'''
-
     logger.info('Подключаемся к vCenter...')
     si = vcenter_connect()
-
     logger.info('Получаем данные из vCenter...')
     content = si.RetrieveContent()
+    
+    # ---------------------
+
     container = content.rootFolder
     view_type = [vim.VirtualMachine]
     recursive = True
