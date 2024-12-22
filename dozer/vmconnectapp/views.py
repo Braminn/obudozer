@@ -11,7 +11,7 @@ from django.urls import reverse
 
 from .vconnect import fetch_vcenter_data, save_vms_to_db, sync_pretty_names_with_db, update_custom_field, last_db_update_time
 
-from .models import Vms, Oss, SystemInfo, Domain
+from .models import Vms, Oss, SystemInfo
 from .forms import VmForm
 
 
@@ -273,7 +273,7 @@ def dbupdte_func(request):
         return HttpResponse('<div id="update-status">Время обновления отсутствует</div>')
 
 
-class DomainListView(ListView):
-    model = Domain
-    template_name = 'domains/domain_list.html'  # Путь к вашему шаблону
-    context_object_name = 'domains'  # Контекст, который будет доступен в шаблоне
+# class DomainListView(ListView):
+#     model = Domain
+#     template_name = 'domains/domain_list.html'  # Путь к вашему шаблону
+#     context_object_name = 'domains'  # Контекст, который будет доступен в шаблоне

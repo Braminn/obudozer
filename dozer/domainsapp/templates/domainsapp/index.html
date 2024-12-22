@@ -1,0 +1,39 @@
+{% extends "vmconnectapp/base.html" %}
+
+{% block content %}
+
+<div class="container">
+    <h1>Domains and Configurations</h1>
+    <table class="table table-striped">
+        <thead>
+            <tr>
+                <th>Domain Name</th>
+                <th>Listen Ports</th>
+                <th>IP Addresses</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for item in domain_configs %}
+                <tr>
+                    <td>{{ item.domain.domain_name }}</td>
+                    <td>
+                        {% for config in item.configs %}
+                            <p>{{ config.listen_ports }}</p>
+                        {% empty %}
+                            <p>No configs</p>
+                        {% endfor %}
+                    </td>
+                    <td>
+                        {% for config in item.configs %}
+                            <p>{{ config.ip_addresses }}</p>
+                        {% empty %}
+                            <p>No configs</p>
+                        {% endfor %}
+                    </td>
+                </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+</div>
+
+{% endblock content %}
