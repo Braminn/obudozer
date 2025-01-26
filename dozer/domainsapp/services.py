@@ -4,7 +4,6 @@ import os
 import socket
 from nginxparser.nginxparser import load
 
-
 def find_proxy_pass(directives):
     """Рекурсивная функция для поиска всех значений proxy_pass в конфигурации."""
     proxy_pass_values = []
@@ -46,12 +45,13 @@ def parse_nginx_config(file_path):
             proxy_pass_values = find_proxy_pass(block)
 
             for proxy_pass_value in proxy_pass_values:
-
-                match = re.search(r'http://(.*?):(\d+)', proxy_pass_value)
+                # Ищем http:// или https://, за которым идет IP или доменное имя, и опциональный порт
+                match = re.search(r'https?://([a-zA-Z0-9.-]+)(?::(\d+))?', proxy_pass_value)  # <-- Измененная строка
                 if match:
                     ip = match.group(1)
-                    port = match.group(2)
-                    # Добавляем IP и порт в server_info, если это IP, а не доменное имя
+                    port = match.group(2) if match.group(2) else None
+
+                    # Добавляем IP и порт в server_info, если это IP-адрес
                     try:
                         socket.inet_aton(ip)  # Проверяем, является ли это IP-адресом
                         ip_addresses.append((ip, port))  # Добавляем в список IP:PORT

@@ -8,8 +8,9 @@
         <thead>
             <tr>
                 <th>Domain Name</th>
+                <th>WAF</th>
+                <th>IP Addresses</th>                
                 <th>Listen Ports</th>
-                <th>IP Addresses</th>
             </tr>
         </thead>
         <tbody>
@@ -18,18 +19,29 @@
                     <td>{{ item.domain.domain_name }}</td>
                     <td>
                         {% for config in item.configs %}
-                            <p>{{ config.listen_ports }}</p>
+                            {% if config.waf %}
+                                <p class="bg-primary text-white">{{ config.waf }}</p>  <!-- Показываем WAF только если True -->
+                            {% else %}
+                                <p></p>  <!-- Если WAF не True -->
+                            {% endif %}
                         {% empty %}
                             <p>No configs</p>
                         {% endfor %}
-                    </td>
+                    </td>  
                     <td>
                         {% for config in item.configs %}
                             <p>{{ config.ip_addresses }}</p>
                         {% empty %}
                             <p>No configs</p>
                         {% endfor %}
-                    </td>
+                    </td>                             
+                    <td>
+                        {% for config in item.configs %}
+                            <p>{{ config.listen_ports }}</p>
+                        {% empty %}
+                            <p>No configs</p>
+                        {% endfor %}
+                    </td>                       
                 </tr>
             {% endfor %}
         </tbody>

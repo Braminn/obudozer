@@ -11,7 +11,7 @@ class NginxDomainConfigListView(ListView):
         context = super().get_context_data(**kwargs)
         # Сортируем домены по имени
         context['domains'] = NginxDomain.objects.all().order_by('domain_name')
-        
+
         # Создаем словарь для отображения конфигураций по каждому домену
         domain_configs = []
         for domain in context['domains']:

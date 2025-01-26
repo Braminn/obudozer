@@ -60,6 +60,7 @@ class NginxConfig(models.Model):
     domain = models.ForeignKey(NginxDomain, related_name="configs", on_delete=models.CASCADE)
     listen_ports = models.JSONField(default=list, verbose_name="Listen Ports")
     ip_addresses = models.JSONField(default=list, verbose_name="IP Addresses")
+    waf = models.BooleanField(default=False, verbose_name="WAF")
 
     def __str__(self):
         return f"{self.domain.domain_name} Configuration"
