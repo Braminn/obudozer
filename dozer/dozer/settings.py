@@ -176,3 +176,5 @@ DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 VC_HOST = os.getenv('VC_HOST')
 VC_USER = os.getenv('VC_USER')
 VC_PWD = os.getenv('VC_PWD')
+CONFIG_DIRECTORY1 = os.getenv('CONFIG_DIRECTORY1')
+CONFIG_DIRECTORY2 = os.getenv('CONFIG_DIRECTORY2')

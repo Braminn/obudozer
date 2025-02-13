@@ -1,4 +1,5 @@
 ''' domains.py '''
+from django.conf import settings
 from django.core.management.base import BaseCommand
 from vmconnectapp.models import NginxDomain, NginxConfig
 from domainsapp.services import analyze_all_configs, print_server_info
@@ -33,16 +34,15 @@ class Command(BaseCommand):
         NginxConfig.objects.all().delete()
         print("Все записи удалены из таблицы NginxConfig.")
 
-
-        CONFIG_DIRECTORY = "/home/stegancevva@admlr.loc/Doc/Python/nginx-configurations-obu-main/"
-        CONFIG_DIRECTORY2 = "/home/stegancevva@admlr.loc/Doc/Python/nginx-configurations-rsnet-main/"
+        config_dir_1 = settings.CONFIG_DIRECTORY1
+        config_dir_2 = settings.CONFIG_DIRECTORY2
 
         print('Обновляем OBU')
-        nginx_data = analyze_all_configs(CONFIG_DIRECTORY)
-        print_server_info(nginx_data)
-        save_nginx_data_to_db(nginx_data, "nginx_obu")
+        nginx_data1 = analyze_all_configs(config_dir_1)
+        print_server_info(nginx_data1)
+        save_nginx_data_to_db(nginx_data1, "nginx_obu")
 
         print('Обновляем RSNET')
-        nginx_data2 = analyze_all_configs(CONFIG_DIRECTORY2)
+        nginx_data2 = analyze_all_configs(config_dir_2)
         print_server_info(nginx_data2)
         save_nginx_data_to_db(nginx_data2, "RSNet")
