@@ -34,7 +34,21 @@ class VmsAPIView(generics.ListAPIView):
 
 
 def vms_data(request):
-    data = list(Vms.objects.order_by('resourcePool').values('id', 'name', 'resourcePool', 'powerState', 'ipAdress'))
+    data = list(Vms.objects.order_by('resourcePool').values(
+        'id', 
+        'name', 
+        'resourcePool', 
+        'powerState', 
+        'ipAdress', 
+        'toolsStatus', 
+        'vmtoolsdescription',
+        'prettyName',
+        'familyName',
+        'bitness',
+        'kernelVersion',
+        'owner',
+        'cms',
+    ))
     return JsonResponse({'data': data})
 
 
