@@ -1,7 +1,11 @@
 ''' forms.py '''
 from django.urls import path
 from .views import (
-    IndexVms,
+    index,
+    VmsAPIView,
+    vms_data,
+    vms_update,
+
     IndexVmsPoweredOff,
     IndexVmstechVM,
     IndexVmsAll,
@@ -16,7 +20,11 @@ from . import views
 
 
 urlpatterns = [
-    path('', IndexVms.as_view()),
+    path('', index),
+    path('api/v1/vmslist', VmsAPIView.as_view()),
+    path('api/v1/data', vms_data, name='vms_data'),
+    path('api/v1/data/update/', vms_update, name='vms_update'),
+
     path('vmspoweredoff/', IndexVmsPoweredOff.as_view()),
     path('techvm/', IndexVmstechVM.as_view()),
     path('vmsall/', IndexVmsAll.as_view()),

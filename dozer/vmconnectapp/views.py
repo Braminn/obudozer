@@ -1,16 +1,19 @@
 ''' views.py '''
 import logging
+import json
 from datetime import datetime, timedelta
 from concurrent.futures import ThreadPoolExecutor
+from rest_framework import generics
 
 from django.shortcuts import get_object_or_404, render
 from django.views.generic import ListView, View
+from django.views.decorators.csrf import csrf_exempt
 from django.utils.timezone import make_aware, localtime
-from django.http import HttpResponse
+from django.http import HttpResponse, JsonResponse
 from django.urls import reverse
 
+from .serializers import VmsSerializer
 from .vconnect import fetch_vcenter_data, save_vms_to_db, sync_pretty_names_with_db, update_custom_field, last_db_update_time
-
 from .models import Vms, Oss, SystemInfo
 from .forms import VmForm
 
@@ -20,30 +23,48 @@ logger.setLevel(logging.DEBUG)
 
 executor = ThreadPoolExecutor(max_workers=1)  # Ограничиваем до одного фонового потока
 
-class IndexVms(ListView):
-    model = Vms
-    template_name = 'vmconnectapp/index.html'
-    context_object_name = 'vms'
 
-    def get_context_data(self, **kwargs):
-        context = super().get_context_data(**kwargs)
-        context['vmsCount'] = Vms.objects.all().count()
-        context['poweredOn'] = Vms.objects.filter(powerState='poweredOn').exclude(name__contains='vCLS').count()
-        context['poweredOff'] = Vms.objects.filter(powerState='poweredOff').count()
-        context['techVM'] = Vms.objects.filter(name__contains='vCLS').count()
-        return context
+def index(request):
+    all_vms = Vms.objects.all()
+    return render(request, 'vmconnectapp/index.html', context={'all_vms': all_vms})
 
-    def get_queryset(self):
-        return Vms.objects.filter(powerState='poweredOn').exclude(name__contains='vCLS').order_by('resourcePool')
+class VmsAPIView(generics.ListAPIView):
+    queryset = Vms.objects.all()
+    serializer_class = VmsSerializer
 
-    # Отобразить уникальные ОС
-    # q = Oss.objects.values('prettyName').distinct()
-    # print ('Ответ', q) # See for yourself.
 
-    # if Oss.objects.filter(prettyName = "Ubuntu 22.04.3 LTS").exists():
-    #     print("в наборе есть объекты")
-    # else:
-    #     print("объекты в наборе отсутствуют")
+def vms_data(request):
+    data = list(Vms.objects.order_by('resourcePool').values('id', 'name', 'resourcePool', 'powerState', 'ipAdress'))
+    return JsonResponse({'data': data})
+
+
+@csrf_exempt
+def vms_update(request):
+    if request.method == "POST":
+        data = json.loads(request.body)
+        cell = Vms.objects.filter(id=data['id']).first()
+        if cell:
+            setattr(cell, data['field'], data['value'])
+            cell.save()
+            return JsonResponse({"status": "success", "message": "Данные обновлены"})
+    return JsonResponse({"status": "error", "message": "Ошибка обновления"}, status=400)
+
+
+# class IndexVms(ListView):
+#     model = Vms
+#     template_name = 'vmconnectapp/index.html'
+#     context_object_name = 'vms'
+
+#     def get_context_data(self, **kwargs):
+#         context = super().get_context_data(**kwargs)
+#         context['vmsCount'] = Vms.objects.all().count()
+#         context['poweredOn'] = Vms.objects.filter(powerState='poweredOn').exclude(name__contains='vCLS').count()
+#         context['poweredOff'] = Vms.objects.filter(powerState='poweredOff').count()
+#         context['techVM'] = Vms.objects.filter(name__contains='vCLS').count()
+#         return context
+
+#     def get_queryset(self):
+#         return Vms.objects.filter(powerState='poweredOn').exclude(name__contains='vCLS').order_by('resourcePool')
 
 
 class IndexVmsPoweredOff(ListView):
@@ -172,7 +193,7 @@ class ViewBadOSExport(ListView):
         return Vms.objects.filter(prettyName__in=expiredOSlist, powerState='poweredOn').order_by('prettyName').order_by('resourcePool')
 
 
-#--------------------------------------------------------------------------------------------------------------------------------------------
+#--Редактирование ячеек с помощью htmx------------------------------------------------------------------------------------------------------
 
 
 class VmListView(View):
@@ -225,8 +246,8 @@ class VmEditView(View):
                 # Возврат нового HTML с HTMX-атрибутами
                 edit_url = reverse('edit_custom_field', args=[vm_instance.id])
                 html = f'''
-                <div id="custom-field-{vm_instance.id}" 
-                    hx-get="{edit_url}" 
+                <div id="custom-field-{vm_instance.id}"
+                    hx-get="{edit_url}"
                     hx-target="this" 
                     hx-swap="outerHTML" 
                     hx-trigger="click">
@@ -237,6 +258,7 @@ class VmEditView(View):
 
         return render(request, 'vmconnectapp/partials/edit_custom_field_form.html', {'form': form, 'vm': vm_instance})
 
+#--------------------------------------------------------------------------------------------------------------------------------------------
 
 def dbupdate_task():
     """
@@ -271,9 +293,3 @@ def dbupdte_func(request):
         return HttpResponse(f'<div id="update-status">{readable_time}</div>')
     else:
         return HttpResponse('<div id="update-status">Время обновления отсутствует</div>')
-
-
-# class DomainListView(ListView):
-#     model = Domain
-#     template_name = 'domains/domain_list.html'  # Путь к вашему шаблону
-#     context_object_name = 'domains'  # Контекст, который будет доступен в шаблоне
