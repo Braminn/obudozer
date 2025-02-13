@@ -7,7 +7,7 @@ class Command(BaseCommand):
     help = 'Парсит конфигурацию Nginx и сохраняет домены в БД'
 
     def handle(self, *args, **kwargs):
-        def save_nginx_data_to_db(nginx_data):
+        def save_nginx_data_to_db(nginx_data, source):
             for domain_name, configs in nginx_data.items():
                 domain, _ = NginxDomain.objects.get_or_create(domain_name=domain_name)
                 for config in configs:
@@ -22,7 +22,8 @@ class Command(BaseCommand):
                         domain=domain,
                         listen_ports=config.get("listen", []),
                         ip_addresses=config.get("ip_addresses", []),
-                        waf=waf  # Добавляем значение waf
+                        waf=waf,  # Добавляем значение waf
+                        source=source  # Добавляем значение source
                     )
 
         print('Updating...')
@@ -33,15 +34,15 @@ class Command(BaseCommand):
         print("Все записи удалены из таблицы NginxConfig.")
 
 
-        CONFIG_DIRECTORY = "/home/stegancevva@admlr.loc/Doc/Python/nginx-configurations-obu/"
-        CONFIG_DIRECTORY2 = "/home/stegancevva@admlr.loc/Doc/Python/nginx-configurations-rsnet/"
+        CONFIG_DIRECTORY = "/home/stegancevva@admlr.loc/Doc/Python/nginx-configurations-obu-main/"
+        CONFIG_DIRECTORY2 = "/home/stegancevva@admlr.loc/Doc/Python/nginx-configurations-rsnet-main/"
 
         print('Обновляем OBU')
         nginx_data = analyze_all_configs(CONFIG_DIRECTORY)
         print_server_info(nginx_data)
-        save_nginx_data_to_db(nginx_data)
+        save_nginx_data_to_db(nginx_data, "nginx_obu")
 
         print('Обновляем RSNET')
         nginx_data2 = analyze_all_configs(CONFIG_DIRECTORY2)
         print_server_info(nginx_data2)
-        save_nginx_data_to_db(nginx_data2)
+        save_nginx_data_to_db(nginx_data2, "RSNet")

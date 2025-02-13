@@ -7,6 +7,7 @@
     <table class="table table-striped">
         <thead>
             <tr>
+                <th>Source</th>
                 <th>Domain Name</th>
                 <th>WAF</th>
                 <th>IP Addresses</th>                
@@ -16,6 +17,13 @@
         <tbody>
             {% for item in domain_configs %}
                 <tr>
+                    <td>
+                        {% for config in item.configs %}
+                        <p>{{ config.source }}</p>
+                        {% empty %}
+                        <p>No configs</p>
+                        {% endfor %}
+                    </td>
                     <td>{{ item.domain.domain_name }}</td>
                     <td>
                         {% for config in item.configs %}
