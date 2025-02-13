@@ -11,48 +11,30 @@
             .then(data => {
                 new gridjs.Grid({
                     columns: [
-                        { id: "id", name: "ID", hidden: true }, // Добавляем id
-                        { id: "name", name: "Имя", 
-                          attributes: (cell, row) => ({
-                              contentEditable: false,
-                              onBlur: (event) => updateData(event, row.cells[0].data, "name") // передаем id
-                          }) 
+                        { id: "id", name: "ID", hidden: true }, // Скрытый ID
+                        { 
+                            name: "Виртуальная машина", 
+                            formatter: (cell, row) => gridjs.html(`
+                                <div>
+                                    <strong>${row.cells[1].data}</strong> <br>
+                                    <small>${row.cells[2].data}</small>
+                                </div>
+                            `) 
                         },
-                        { id: "resourcePool", name: "resourcePool", sort: true,
-                          attributes: (cell, row) => ({
-                              contentEditable: false,
-                              onBlur: (event) => updateData(event, row.cells[0].data, "resourcePool") // передаем id
-                          }) 
-                        },
-                        { id: "powerState", name: "powerState",
-                          attributes: (cell, row) => ({
-                              contentEditable: false,
-                              onBlur: (event) => updateData(event, row.cells[0].data, "powerState") // передаем id
-                          }) 
-                        },
+                        { id: "powerState", name: "Power State" }
                     ],
-                    data: data.data,
+                    data: data.data.map(vm => [
+                        vm.id,
+                        vm.name,
+                        vm.resourcePool,
+                        vm.powerState
+                    ]),
                     search: true,
                     sort: true,
                 }).render(document.getElementById("table-container"));
             });
-    
-        function updateData(event, id, field) {
-            let newValue = event.target.innerText;
-            fetch(`api/v1/data/update/`, {
-                method: "POST",
-                headers: { "Content-Type": "application/json", "X-CSRFToken": getCSRFToken() },
-                body: JSON.stringify({ id: id, field: field, value: newValue })
-            }).then(response => response.json())
-              .then(data => console.log(data));
-        }
-    
-        function getCSRFToken() {
-            return document.cookie.split('; ')
-                .find(row => row.startsWith('csrftoken'))
-                ?.split('=')[1];
-        }
-    });        
+    });
 </script>
+
 
 {% endblock content %}

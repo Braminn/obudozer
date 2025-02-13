@@ -3,6 +3,7 @@ astroid==3.2.4
 backports.zoneinfo==0.2.1; python_version < "3.9"
 dill==0.3.9
 Django==4.2.14
+djangorestframework==3.15.2
 isort==5.13.2
 mccabe==0.7.0
 platformdirs==4.3.6
