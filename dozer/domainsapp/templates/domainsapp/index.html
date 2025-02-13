@@ -5,40 +5,27 @@
 <div class="container">
     <h1>Domains and Configurations</h1>
     <div id="table-container"></div>
-
+</div>
 
 <script>
     document.addEventListener("DOMContentLoaded", function () {
-        fetch('/domains/nginx_domains/')  // Исправленный путь
+        fetch('/domains/nginx_data/')  // Загружаем данные из API
             .then(response => response.json())
             .then(data => {
-                let rows = [];
-                data.forEach(domain => {
-                    domain.configs.forEach(config => {
-                        rows.push([
-                            config.source || "No config",
-                            domain.domain_name,
-                            config.waf ? "✅" : "",
-                            config.ip_addresses.length > 0 ? config.ip_addresses.join(", ") : "No IPs",
-                            config.listen_ports.length > 0 ? config.listen_ports.join(", ") : "No Ports"
-                        ]);
-                    });
-
-                    if (domain.configs.length === 0) {
-                        rows.push(["No config", domain.domain_name, "", "No IPs", "No Ports"]);
-                    }
-                });
-
                 new gridjs.Grid({
-                    columns: ["Source", "Domain Name", "WAF", "IP Addresses", "Listen Ports"],
-                    data: rows,
+                    columns: [
+                        { id: "source", name: "Source" },
+                        { id: "domain_name", name: "Domain Name" },
+                        { id: "waf", name: "WAF" },
+                        { id: "ip_addresses", name: "IP Addresses" },
+                        { id: "listen_ports", name: "Listen Ports" }
+                    ],
+                    data: data.data,
                     search: true,
-                    sort: true,
+                    sort: true
                 }).render(document.getElementById("table-container"));
             });
     });
 </script>
-
-</div>
 
 {% endblock content %}
