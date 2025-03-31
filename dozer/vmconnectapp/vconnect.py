@@ -151,6 +151,7 @@ def fetch_vcenter_data():
                 "kernelVersion": guest_details["kernelVersion"],
                 "bitness": guest_details["bitness"],
                 "cms": get_custom_field(vm, "cms"),
+                "creationDate": vm.config.createDate if getattr(vm.config, 'createDate', None) else None,
             }
         elif isinstance(vm, vim.ResourcePool):
             resource_pools[vm.name] = {
@@ -198,6 +199,7 @@ def save_vms_to_db(vms):
                     kernelVersion=vm_data.get("kernelVersion"),
                     bitness=vm_data.get("bitness"),
                     cms=vm_data.get("cms"),
+                    creation_date=vm_data.get("creationDate"),
                 )
         print("Данные успешно сохранены в базу данных.")
     except ImportError as e:

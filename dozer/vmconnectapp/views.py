@@ -48,6 +48,7 @@ def vms_data(request):
         'kernelVersion',
         'owner',
         'cms',
+        'creation_date',
     ))
     return JsonResponse({'data': data})
 

@@ -2,114 +2,103 @@
 
 {% block content %}
 
-<select id="filter-powerState" class="form-select" aria-label="Default select example">
-    <option value="">Все</option>
-    <option value="poweredOn">Включенные</option>
-    <option value="poweredOff">Выключенные</option>
-</select>
+<div class="filter-container">
+    <label for="filter-powerState" class="form-label">Фильтр по состоянию:</label>
+    <select id="filter-powerState" class="form-select" aria-label="Фильтр по состоянию ВМ">
+        <option value="">Все</option>
+        <option value="poweredOn">Включенные</option>
+        <option value="poweredOff">Выключенные</option>
+    </select>
+</div>
 <div id="table-container"></div>
+
+<style>
+    .filter-container {
+        margin-bottom: 20px;
+        max-width: 300px; /* Ограничиваем ширину фильтра */
+    }
+    .form-label {
+        font-weight: bold;
+        margin-bottom: 5px;
+        display: block; /* Для размещения над select */
+    }
+    .form-select {
+        padding: 8px 12px; /* Увеличиваем отступы внутри */
+        border-radius: 6px; /* Скругляем углы */
+        border: 1px solid #ced4da; /* Стандартная граница Bootstrap */
+        background-color: #fff; /* Белый фон */
+        transition: border-color 0.2s ease-in-out; /* Плавный переход для фокуса */
+    }
+    .form-select:focus {
+        border-color: #007bff; /* Цвет границы при фокусе */
+        box-shadow: 0 0 5px rgba(0, 123, 255, 0.5); /* Легкая тень */
+        outline: none; /* Убираем стандартный outline */
+    }
+    /* Стили для Grid.js таблицы (опционально) */
+    .gridjs-container {
+        margin-top: 20px;
+    }
+    .gridjs-table {
+        width: 100%;
+        border-collapse: collapse;
+    }
+    .gridjs-th, .gridjs-td {
+        padding: 10px;
+        border: 1px solid #dee2e6; /* Границы ячеек как в Bootstrap */
+    }
+    .gridjs-th {
+        background-color: #f8f9fa; /* Светлый фон для заголовков */
+        font-weight: bold;
+    }
+</style>
 
 <script>
     document.addEventListener("DOMContentLoaded", function () {
+        let originalData;
+        let grid;
+
         fetch('api/v1/data')
             .then(response => response.json())
             .then(data => {
-                new gridjs.Grid({
+                console.log('Данные с бэкенда:', data);
+                originalData = data.data;
+
+                grid = new gridjs.Grid({
                     columns: [
-                        { id: "id", name: "ID", hidden: true }, // Скрытый ID
+                        { id: "name", name: "Имя ВМ" },
+                        { id: "resourcePool", name: "Resource Pool" },
+                        { id: "powerState", name: "Power State" },
+                        { id: "ipAdress", name: "IP-адрес" },
+                        { id: "vmtoolsdescription", name: "VM Tools Description" },
+                        { id: "prettyName", name: "Pretty Name" },
                         { 
-                            name: "Виртуальная машина", 
-                            formatter: (cell, row) => gridjs.html(`
-                                <div>
-                                    <strong contenteditable="true" 
-                                            onBlur="updateData(event, '${row.cells[0].data}', 'name')">${row.cells[1].data}</strong> <br>
-                                    <small>${row.cells[2].data}</small> <br>
-                                    <small>${row.cells[3].data}</small>
-                                </div>
-                            `) 
-                        },
-                        { id: "resourcePool", name: "Resource Pool", hidden: true },
-                        { id: "powerState", name: "Power State", hidden: true },
-                        { 
-                            name: "IP/VM Tools", 
-                            formatter: (cell, row) => gridjs.html(`
-                                <div>
-                                    <strong>${row.cells[4].data}</strong> <br>
-                                    <small>${row.cells[5].data}</small> <br>
-                                    <small>${row.cells[6].data}</small>
-                                </div>
-                            `) 
-                        },
-                        { id: "ipAdress", name: "ipAdress", hidden: true },
-                        { id: "toolsStatus", name: "toolsStatus", hidden: true },
-                        { id: "vmtoolsdescription", name: "vmtoolsdescription", hidden: true },
-                        { 
-                            name: "Операционная система", 
-                            formatter: (cell, row) => gridjs.html(`
-                                <div>
-                                    <strong>${row.cells[7].data}</strong> <br>
-                                    <small>${row.cells[8].data} / ${row.cells[9].data}</small> <br>
-                                    <small>${row.cells[10].data}</small>
-                                </div>
-                            `) 
-                        },
-                        { id: "prettyName", name: "prettyName", hidden: true },
-                        { id: "familyName", name: "familyName", hidden: true },
-                        { id: "bitness", name: "bitness", hidden: true },
-                        { id: "kernelVersion", name: "kernelVersion", hidden: true },
-                        { 
-                            name: "Назначение / Владелец", 
-                            formatter: (cell, row) => gridjs.html(`
-                                <div>
-                                    <strong contenteditable="true" 
-                                            onBlur="updateData(event, '${row.cells[0].data}', 'owner')">${row.cells[11].data}</strong> <br>
-                                    <strong contenteditable="true" 
-                                            onBlur="updateData(event, '${row.cells[0].data}', 'cms')">${row.cells[12].data}</strong> <br> 
-                                </div>
-                            `) 
-                        },
-                        { id: "owner", name: "owner", hidden: true },
-                        { id: "cms", name: "cms", hidden: true },
+                            id: "creation_date", 
+                            name: "Дата создания",
+                            formatter: (cell) => {
+                                if (cell) {
+                                    const d = new Date(cell);
+                                    return `${String(d.getDate()).padStart(2, '0')}-${String(d.getMonth() + 1).padStart(2, '0')}-${d.getFullYear()}`;
+                                }
+                                return '-';
+                            }
+                        }
                     ],
-                    data: data.data.map(vm => [
-                        vm.id,                  // 0
-                        vm.name,                // 1
-                        vm.resourcePool,        // 2
-                        vm.powerState,          // 3
-                        vm.ipAdress,            // 4
-                        vm.toolsStatus,         // 5
-                        vm.vmtoolsdescription,  // 6
-                        vm.prettyName,          // 7
-                        vm.familyName,          // 8
-                        vm.bitness,             // 9
-                        vm.kernelVersion,       // 10
-                        vm.owner,               // 11
-                        vm.cms,                 // 12
-                    ]),
+                    data: originalData,
                     search: true,
                     sort: true,
                 }).render(document.getElementById("table-container"));
-            });
+
+                // Фильтр по powerState
+                document.getElementById('filter-powerState').addEventListener('change', function () {
+                    const filterValue = this.value;
+                    const filteredData = filterValue
+                        ? originalData.filter(vm => vm.powerState === filterValue)
+                        : originalData;
+                    grid.updateConfig({ data: filteredData }).forceRender();
+                });
+            })
+            .catch(error => console.error('Ошибка загрузки данных:', error));
     });
-
-    function updateData(event, id, field) {
-        let newValue = event.target.innerText;
-        fetch(`api/v1/data/update/`, {
-            method: "POST",
-            headers: { "Content-Type": "application/json", "X-CSRFToken": getCSRFToken() },
-            body: JSON.stringify({ id: id, field: field, value: newValue })
-        }).then(response => response.json())
-          .then(data => console.log(data))
-          .catch(error => console.error("Ошибка обновления:", error));
-    }
-
-    function getCSRFToken() {
-        return document.cookie.split('; ')
-            .find(row => row.startsWith('csrftoken'))
-            ?.split('=')[1];
-    }
 </script>
-
-
 
 {% endblock content %}

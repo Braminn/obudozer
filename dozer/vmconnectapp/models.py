@@ -19,6 +19,7 @@ class Vms(models.Model):
     bitness = models.CharField(max_length=150, null=True)
     cms = models.CharField(max_length=150, null=True)
     owner = models.CharField(max_length=150, null=True)
+    creation_date = models.DateTimeField(null=True, blank=True)
 
     def __str__(self):
         return str(self.name)
