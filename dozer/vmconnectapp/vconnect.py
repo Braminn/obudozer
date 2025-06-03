@@ -23,10 +23,10 @@ def vcenter_connect():
     ''' vCenter Connect '''
     service_instance = None
     try:
-        service_instance = SmartConnect(host = settings.VC_HOST,
-                                        user = settings.VC_USER,
-                                        pwd = settings.VC_PWD,
-                                        disableSslCertValidation = True)
+        service_instance = SmartConnect(host=settings.VC_HOST,
+                                        user=settings.VC_USER,
+                                        pwd=settings.VC_PWD,
+                                        disableSslCertValidation=True)
     except IOError as io_error:
         print(io_error)
     if not service_instance:
@@ -135,8 +135,10 @@ def fetch_vcenter_data():
 
     for vm in tqdm(obj_view.view, desc="Обработка объектов", unit="OBJ"):
         if isinstance(vm, vim.VirtualMachine):
-            guest_details = get_guest_info(vm) # Вызываем функцию парсинга guestInfo.detailed.data
-            resource_pool_path = (get_resource_pool_path(vm.resourcePool) if vm.resourcePool else None) # Вызываем функцию преобразования полного пути ресурсного пула
+            # Вызываем функцию парсинга guestInfo.detailed.data
+            guest_details = get_guest_info(vm)
+            # Вызываем функцию преобразования полного пути ресурсного пула
+            resource_pool_path = (get_resource_pool_path(vm.resourcePool) if vm.resourcePool else None)
             vms[vm.name] = {
                 "powerState": vm.runtime.powerState if vm.runtime else None,
                 "resourcePool": resource_pool_path,

@@ -1,15 +1,14 @@
 asgiref==3.8.1
-astroid==3.2.4
-backports.zoneinfo==0.2.1; python_version < "3.9"
+astroid==3.3.10
 dill==0.3.9
 Django==4.2.14
+django-simple-history==3.8.0
 djangorestframework==3.15.2
 isort==5.13.2
 mccabe==0.7.0
+nginxparser @ git+https://github.com/pyhedgehog/nginxparser.git@4d8e617860a20fbe7bdf169f892646c0c0369c11
 platformdirs==4.3.6
-pylint==3.2.7
-pylint-django==2.5.5
-pylint-plugin-utils==0.8.2
+pyparsing==3.2.0
 python-dotenv==1.0.1
 pyvmomi==8.0.3.0.1
 six==1.16.0
